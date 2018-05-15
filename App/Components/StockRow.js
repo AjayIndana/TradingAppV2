@@ -338,6 +338,7 @@ export default class StockRow extends Component {
        }
        this.setState({'newLow': parseFloat(newLow).toFixed(2)});
        var predPrice = parseFloat(newLow+(newLow*0.004)).toFixed(2);
+       var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
        this.setState({'predPrice': predPrice});
        var newdiff = parseFloat(closePrice-newLow).toFixed(2);
        var newVol = parseFloat((diff*100)/newLow).toFixed(2);
@@ -366,10 +367,10 @@ export default class StockRow extends Component {
       var shares = Math.round(10000/closePrice);
 
 
-        if(closePrice>this.state.prevHighPrice && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
+        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
         //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
-          if(closePrice>predPrice) {
+          if(closePrice>newLow && closePrice<=predPrice) {
             if(this.state.notify){
               this.setState({'notify': false});
               this.setState({'buynotify': true});
