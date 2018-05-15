@@ -415,7 +415,7 @@ export default class StockRow extends Component {
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
-            <Buy text={this.state.buy}/>
+            <Updated closePrice={this.state.closePrice}/>
             <DayRange text={this.state.dayRange} open={this.state.openPrice} close={this.state.closePrice}/>
             <Range lowPrice={this.state.newLow} predPrice={this.state.predPrice}/>
             <SevenRange text={this.state.sevenRange} open={this.state.openPrice7} close={this.state.closePrice}/>
