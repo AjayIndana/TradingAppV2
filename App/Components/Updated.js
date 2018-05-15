@@ -5,7 +5,6 @@ import styles from './Styles/UpdatedStyle'
 
 export default class Updated extends Component {
   static propTypes = {
-    text: PropTypes.string,
     closePrice: PropTypes.string
   }
   // // Prop type warnings
@@ -23,7 +22,6 @@ export default class Updated extends Component {
     return (
       <View style={styles.container}>
         <Text style={styles.textbox}>{this.props.closePrice}</Text>
-        <Text style={styles.textbox}>{this.props.text}</Text>
       </View>
     )
   }
