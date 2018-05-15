@@ -26,9 +26,16 @@ export default class Buy extends Component {
         </View>
       )
     }
-    else {
+    else if(this.props.text=="NA"){
       return (
         <View style={styles.container} backgroundColor='grey'>
+          <Text style={styles.textbox}>{this.props.text}</Text>
+        </View>
+      )
+    }
+    else {
+      return (
+        <View style={styles.container} backgroundColor='black'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )

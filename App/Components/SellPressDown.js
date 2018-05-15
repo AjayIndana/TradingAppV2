@@ -3,11 +3,10 @@ import PropTypes from 'prop-types';
 import { View, Text } from 'react-native'
 import styles from './Styles/SevenRangeStyle'
 
-export default class SellPress extends Component {
+export default class SellPressDown extends Component {
   static propTypes = {
     text: PropTypes.number,
-    open: PropTypes.number,
-    close: PropTypes.number
+    sla: PropTypes.number
   }
   // // Prop type warnings
   // static propTypes = {
@@ -21,16 +20,9 @@ export default class SellPress extends Component {
   // }
 
   render () {
-    if(this.props.open<this.props.close && this.props.text<30){
+    if(this.props.text>this.props.sla){
       return (
         <View style={styles.container} backgroundColor='green'>
-          <Text style={styles.textbox}>{this.props.text}</Text>
-        </View>
-      )
-    }
-    else if(this.props.open>this.props.close && this.props.text<30){
-      return (
-        <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )

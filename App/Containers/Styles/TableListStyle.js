@@ -10,7 +10,7 @@ export default StyleSheet.create({
   row: {
     flex: 1,
     backgroundColor: Colors.fire,
-    marginVertical: Metrics.smallMargin,
+    //marginVertical: Metrics.smallMargin,
     justifyContent: 'center'
   },
   boldLabel: {

@@ -13,7 +13,9 @@ import SevenRange from './SevenRange'
 import SevenRangeVol from './SevenRangeVol'
 import FifteenRange from './FifteenRange'
 import Buy from './Buy'
-import SellPress from './SellPress'
+import Range from './Range'
+import SellPressUp from './SellPressUp'
+import SellPressDown from './SellPressDown'
 import PushController from './PushController'
 import PushNotification from 'react-native-push-notification'
 import { ArtyCharty } from 'arty-charty'
@@ -41,6 +43,7 @@ export default class StockRow extends Component {
       highState: true,
       lowState: true,
       notify: true,
+      buynotify: false,
       prevHighPrice: '',
       prevLowPrice: '',
     }
@@ -49,7 +52,7 @@ export default class StockRow extends Component {
       this.getClosePrice(this.state.symbol);
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
-    }, 30000);
+    }, 20000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
@@ -270,6 +273,9 @@ export default class StockRow extends Component {
          lowPrice30 = closePrice;
        }
 
+       var open7 = open.slice(open.length-6, open.length);
+       var openPrice7 = parseFloat(open7[0]).toFixed(2);
+       this.setState({'openPrice7': openPrice7});
        // var volume = responseJson.map(function(n){
        //   //if(n.volume!=0 && n.volume!=-1) return n.volume;
        //   return n["volume"]
@@ -289,33 +295,68 @@ export default class StockRow extends Component {
        //   this.setState({'volumePercent': volumePercent});
        // }
 
-       var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
-       var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
+       // var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
+       // var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
+
+       var sellingPressDown = (openPrice<closePrice) ? Math.round(((openPrice-lowPrice)/(highPrice-lowPrice))*100) : Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
+       this.setState({'sellingPressDown': sellingPressDown});
+       var sellingPressUp = (openPrice<closePrice) ? Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100) : Math.round(((highPrice-openPrice)/(highPrice-lowPrice))*100);
+       this.setState({'sellingPressUp': sellingPressUp});
+       var dayRange = 100 - (sellingPressUp+sellingPressDown);
        this.setState({'dayRange': dayRange});
-       this.setState({'dayVolatility': dayVolatility});
+       //this.setState({'dayVolatility': dayVolatility});
 
        //var fifteenRange = Math.round(((closePrice-lowPrice15)/(highPrice15-lowPrice15))*100);
        //var thirtyRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        // this.setState({'fifteenRange': fifteenRange});
 
-       var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
-       this.setState({'sevenRange': sevenRange});
+       // var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
+       // this.setState({'sevenRange': sevenRange});
+
        var diff = parseFloat(closePrice-lowPrice7).toFixed(2);
        var sevenRangeVol = parseFloat((diff*100)/lowPrice7).toFixed(2);
        this.setState({'sevenRangeVol': sevenRangeVol});
 
-       var sellingPressDown = (openPrice<closePrice) ? Math.round(((openPrice-lowPrice)/(highPrice-lowPrice))*100) : Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100) ;
-       this.setState({'sellingPressDown': sellingPressDown});
-       var sellingPressUp = (openPrice<closePrice) ? Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100) : Math.round(((highPrice-openPrice)/(highPrice-lowPrice))*100) ;
-       this.setState({'sellingPressUp': sellingPressUp});
+       var createGroupedArray = function(arr, chunkSize) {
+         var groups = [], i;
+         for (i = 0; i < arr.length; i += chunkSize) {
+             groups.push(arr.slice(i, i + chunkSize));
+         }
+         return groups;
+       }
+
+       var lowarr = createGroupedArray(low.reverse(), 5);
+       var lowp = lowarr.map(function(n){
+         return Math.min.apply(null,n);
+       });
+       var newLow = lowp[0];
+       for(var i=1;i<lowp.length;i++){
+         if(lowp[i]<=newLow){
+           newLow = lowp[i];
+         }
+         else break;
+       }
+       this.setState({'newLow': parseFloat(newLow).toFixed(2)});
+       var predPrice = parseFloat(newLow+(newLow*0.004)).toFixed(2);
+       this.setState({'predPrice': predPrice});
+       var newdiff = parseFloat(closePrice-newLow).toFixed(2);
+       var newVol = parseFloat((diff*100)/newLow).toFixed(2);
+       this.setState({'newVol': newVol});
+
+       var sellingPressDown7 = (openPrice7<closePrice) ? Math.round(((openPrice7-lowPrice7)/(highPrice7-lowPrice7))*100) : Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sellingPressDown7': sellingPressDown7});
+       var sellingPressUp7 = (openPrice7<closePrice) ? Math.round(((highPrice7-closePrice)/(highPrice7-lowPrice7))*100) : Math.round(((highPrice7-openPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sellingPressUp7': sellingPressUp7});
+       var sevenRange = 100 - (sellingPressUp7+sellingPressDown7);
+       this.setState({'sevenRange': sevenRange});
        //var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
        //this.setState({'hhRange': hhRange});
        // this.setState({'hhVolatility': hhVolatility});
       // this.setState({update: true});
       // return closePrice;
 
-      var dayVolatilityPrice = (Math.round(lowPrice*100)/100).toString() + "-" + (Math.round(highPrice*100)/100).toString();
-      this.setState({'dayVolatilityPrice': dayVolatilityPrice});
+      // var dayVolatilityPrice = (Math.round(lowPrice*100)/100).toString() + "-" + (Math.round(highPrice*100)/100).toString();
+      // this.setState({'dayVolatilityPrice': dayVolatilityPrice});
 
       var today = new Date();
       var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
@@ -327,19 +368,35 @@ export default class StockRow extends Component {
 
         if(closePrice>this.state.prevHighPrice && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
-          if(sevenRange>50 && dayRange>70 && sevenRangeVol>0.4 && sellingPressDown<30 && sellingPressUp<30) {
+        //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
+          if(closePrice>predPrice) {
             if(this.state.notify){
               this.setState({'notify': false});
+              this.setState({'buynotify': true});
               this.handlePushNotification(symbol, "BUY", time, shares);
+            }
+          }
+          if(this.state.buynotify){
+            if(sevenRangeVol>0.5){
+              this.setState({'buynotify': false});
+              this.handlePushNotification(symbol, "SELL", time, shares);
             }
           }
         }
         else if(closePrice>this.state.prevHighPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice){
           this.setState({'buy': "Buy"});
-          if(sevenRange>50 && dayRange>70 && sevenRangeVol>0.4 && sellingPressDown<30 && sellingPressUp<30) {
+          // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
+          if(closePrice>predPrice) {
             if(this.state.notify){
               this.setState({'notify': false});
+              this.setState({'buynotify': true});
               this.handlePushNotification(symbol, "BUY", time, shares);
+            }
+          }
+          if(this.state.buynotify){
+            if(sevenRangeVol>0.5){
+              this.setState({'buynotify': false});
+              this.handlePushNotification(symbol, "SELL", time, shares);
             }
           }
         }
@@ -353,19 +410,26 @@ export default class StockRow extends Component {
   }
 
   render () {
+    if(this.state.buy=="Buy"){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
             <Buy text={this.state.buy}/>
-            <DayRange text={this.state.dayRange}/>
-            <SellPress text={this.state.sellingPressUp} open={this.state.openPrice} close={this.state.closePrice}/>
-            <SellPress text={this.state.sellingPressDown} open={this.state.openPrice} close={this.state.closePrice}/>
-            <SevenRange text={this.state.sevenRange}/>
+            <DayRange text={this.state.dayRange} open={this.state.openPrice} close={this.state.closePrice}/>
+            <Range lowPrice={this.state.newLow} predPrice={this.state.predPrice}/>
+            <SevenRange text={this.state.sevenRange} open={this.state.openPrice7} close={this.state.closePrice}/>
+            <SellPressUp text={this.state.sellingPressUp7} sla="50"/>
+            <SellPressDown text={this.state.sellingPressDown7} sla="50"/>
             <SevenRangeVol text={this.state.sevenRangeVol} open={this.state.openPrice} close={this.state.closePrice}/>
-            <Updated text={this.state.updated} closePrice={this.state.closePrice}/>
             <PushController />
           </View>
-      )
+        )
+      }
+      else{
+        return (
+          null
+        )
+      }
     }
 
   }

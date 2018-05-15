@@ -21,7 +21,7 @@ export default class SevenRangeVol extends Component {
   // }
 
   render () {
-    if(this.props.open<this.props.close && this.props.text>0.4){
+    if(this.props.text>0.4){
       return (
         <View style={styles.container} backgroundColor='green'>
           <Text style={styles.textbox}>{this.props.text}</Text>
