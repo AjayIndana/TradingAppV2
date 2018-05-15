@@ -337,7 +337,7 @@ export default class StockRow extends Component {
          else break;
        }
        this.setState({'newLow': parseFloat(newLow).toFixed(2)});
-       var predPrice = parseFloat(newLow+(newLow*0.004)).toFixed(2);
+       var predPrice = parseFloat(newLow+(newLow*0.003)).toFixed(2);
        var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
        this.setState({'predPrice': predPrice});
        var newdiff = parseFloat(closePrice-newLow).toFixed(2);
