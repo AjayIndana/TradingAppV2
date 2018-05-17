@@ -503,6 +503,7 @@ export default class StockRow extends Component {
             <SevenRangeVol up={this.state.sevenRangeVolUp} down={this.state.sevenRangeVolDown}/>
             <HighPer text={this.state.highper}/>
             <Updated closePrice={this.state.limit}/>
+            <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
             <PushController />
           </View>
         )
