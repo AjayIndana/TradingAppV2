@@ -93,20 +93,20 @@ export default class StockRow extends Component {
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
-            this.setState({'prevHighPrice': result["high"][-1]});
-            this.setState({'prevLowPrice': result["low"][-1]});
-            this.setState({'prevOpenPrice': result["open"][-1]});
-            this.setState({'prevClosePrice': result["close"][-1]});
-            this.setState({'oneHighPrice': result["high"][-2]});
-            this.setState({'oneLowPrice': result["low"][-2]});
-            this.setState({'oneOpenPrice': result["open"][-2]});
-            this.setState({'oneClosePrice': result["close"][-2]});
+            result["low"].reverse().shift(-1);
+            result["high"].reverse().shift(-1);
+            result["open"].reverse().shift(-1);
+            result["close"].reverse().shift(-1);
+            this.setState({'prevHighPrice': result["high"][0]});
+            this.setState({'prevLowPrice': result["low"][0]});
+            this.setState({'prevOpenPrice': result["open"][0]});
+            this.setState({'prevClosePrice': result["close"][0]});
+            this.setState({'oneHighPrice': result["high"][1]});
+            this.setState({'oneLowPrice': result["low"][1]});
+            this.setState({'oneOpenPrice': result["open"][1]});
+            this.setState({'oneClosePrice': result["close"][1]});
 
-            var low = result.map(function(n){
-             // if(n.low!=0 && n.low!=-1) return n.low;
-             return n["low"];
-              });
-            lowp=low.filter(function(n){ return n != undefined });
+            var lowp = result["low"];
             var count=1;
             var newLow = lowp[0];
             for(var i=1;i<lowp.length;i++){
