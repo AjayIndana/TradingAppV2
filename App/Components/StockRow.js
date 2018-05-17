@@ -449,7 +449,7 @@ export default class StockRow extends Component {
         this.setState({'volChange': 'down'});
       }
 
-        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.prevClosePrice>this.state.prevOpenPrice && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
+        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
         //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
