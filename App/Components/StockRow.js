@@ -93,10 +93,14 @@ export default class StockRow extends Component {
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
-            this.setState({'prevHighPrice': result["high"][1]});
-            this.setState({'prevLowPrice': result["low"][1]});
-            this.setState({'oneHighPrice': result["high"][0]});
-            this.setState({'oneLowPrice': result["low"][0]});
+            this.setState({'prevHighPrice': result["high"][-1]});
+            this.setState({'prevLowPrice': result["low"][-1]});
+            this.setState({'prevOpenPrice': result["open"][-1]});
+            this.setState({'prevClosePrice': result["close"][-1]});
+            this.setState({'oneHighPrice': result["high"][-2]});
+            this.setState({'oneLowPrice': result["low"][-2]});
+            this.setState({'oneOpenPrice': result["open"][-2]});
+            this.setState({'oneClosePrice': result["close"][-2]});
 
             var low = result.map(function(n){
              // if(n.low!=0 && n.low!=-1) return n.low;
@@ -412,7 +416,7 @@ export default class StockRow extends Component {
       var limit = parseFloat(predPrice*0.005).toFixed(2);
       this.setState({'limit': limit});
 
-        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
+        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.prevClosePrice>this.state.prevOpenPrice && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
         //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
@@ -429,7 +433,7 @@ export default class StockRow extends Component {
             }
           }
         }
-        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
+        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
           // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
