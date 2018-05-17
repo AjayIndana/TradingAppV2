@@ -60,9 +60,11 @@ export default class StockRow extends Component {
     this.handlePushNotification = this.handlePushNotification.bind(this);
     this._onPressButton = this._onPressButton.bind(this);
     this.getPreviousPrice = this.getPreviousPrice.bind(this);
+    this.getPreviousVolume = this.getPreviousVolume.bind(this);
   }
 
   componentDidMount = () => {
+    this.getPreviousVolume(this.state.symbol);
     this.getPreviousPrice(this.state.symbol);
     this.getClosePrice(this.state.symbol);
     this.setState({'notify': true});
@@ -93,6 +95,7 @@ export default class StockRow extends Component {
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
+            this.setState({'todaysVolume': result["volume"].pop()});
             result["low"].reverse().shift(-1);
             result["high"].reverse().shift(-1);
             result["open"].reverse().shift(-1);
@@ -122,6 +125,23 @@ export default class StockRow extends Component {
           console.log(error);
         });
     }
+
+  async getPreviousVolume(symbol){
+      return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=2d&includePrePost=false&interval=1m')
+      .then((response) => response.json())
+      .then((responseJson) => {
+            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
+            var len = result["volume"].length-390;
+            var vol = result["volume"].slice(0,len)
+            var vol = vol.filter(function(n){ return n != undefined });
+            var prevVolume = vol.reduce((a, b) => a + b, 0);
+            this.setState({'prevVolume': prevVolume});
+        })
+        .catch((error,symbol,response) => {
+          console.log(error);
+        });
+    }
+
 
 
   async getClosePrice(symbol){
@@ -415,6 +435,19 @@ export default class StockRow extends Component {
 
       var limit = parseFloat(predPrice*0.005).toFixed(2);
       this.setState({'limit': limit});
+      
+      var volChange = this.state.todaysVolume - this.state.prevVolume;
+      
+      if(volChange>0) {
+        var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(2);
+        this.setState({'volPer': volPer});
+        this.setState({'volChange': 'up'});
+      }
+      else {
+        var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(2);
+        this.setState({'volPer': volPer});
+        this.setState({'volChange': 'down'});
+      }
 
         if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.prevClosePrice>this.state.prevOpenPrice && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
