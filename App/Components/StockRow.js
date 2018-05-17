@@ -119,6 +119,22 @@ export default class StockRow extends Component {
               }
               else break;
             }
+        
+            var highp = result["high"];
+            var newcount=1;
+            var newHigh = highp[0];
+            for(var i=1;i<highp.length;i++){
+              if(highp[i]<=newHigh){
+                newHigh = highp[i];
+                newcount = newcount+1;
+              }
+              else break;
+            }
+        
+            if(count>newcount) {
+              count=newcount;
+            }
+        
             this.setState({'count': count});
         })
         .catch((error,symbol,response) => {
