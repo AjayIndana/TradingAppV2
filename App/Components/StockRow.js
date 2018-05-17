@@ -466,7 +466,7 @@ export default class StockRow extends Component {
             }
           }
         }
-        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
+        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.volChange=="up" && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
           // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
