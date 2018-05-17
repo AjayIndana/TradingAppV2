@@ -5,9 +5,8 @@ import styles from './Styles/SevenRangeStyle'
 
 export default class SevenRangeVol extends Component {
   static propTypes = {
-    text: PropTypes.number,
-    open: PropTypes.number,
-    close: PropTypes.number
+    up: PropTypes.number,
+    down: PropTypes.number
   }
   // // Prop type warnings
   // static propTypes = {
@@ -21,17 +20,24 @@ export default class SevenRangeVol extends Component {
   // }
 
   render () {
-    if(this.props.text>0.4){
+    if(this.props.up>=this.props.down && this.props.up>0.20){
       return (
         <View style={styles.container} backgroundColor='green'>
-          <Text style={styles.textbox}>{this.props.text}</Text>
+          <Text style={styles.textbox}>{this.props.up}</Text>
+        </View>
+      )
+    }
+    else if(this.props.up<this.props.down && this.props.down>0.20) {
+      return (
+        <View style={styles.container} backgroundColor='red'>
+          <Text style={styles.textbox}>{this.props.down}</Text>
         </View>
       )
     }
     else {
       return (
         <View style={styles.container} backgroundColor='grey'>
-          <Text style={styles.textbox}>{this.props.text}</Text>
+          <Text style={styles.textbox}>{this.props.down}</Text>
         </View>
       )
     }

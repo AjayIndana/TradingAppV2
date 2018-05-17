@@ -21,14 +21,14 @@ export default class DayRange extends Component {
   // }
 
   render () {
-    if(this.props.text>70 && this.props.close<this.props.open){
+    if(this.props.close<this.props.open){
       return (
         <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )
     }
-    else if(this.props.text>70 && this.props.close>this.props.open){
+    else if(this.props.close>this.props.open){
       return (
         <View style={styles.container} backgroundColor='green'>
           <Text style={styles.textbox}>{this.props.text}</Text>

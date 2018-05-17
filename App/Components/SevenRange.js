@@ -21,7 +21,14 @@ export default class SevenRange extends Component {
   // }
 
   render () {
-    if(this.props.open>this.props.close){
+    if(this.props.open<this.props.close && this.props.text>60){
+      return (
+        <View style={styles.container} backgroundColor='green'>
+          <Text style={styles.textbox}>{this.props.text}</Text>
+        </View>
+      )
+    }
+    else if(this.props.text<30){
       return (
         <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.text}</Text>
@@ -30,7 +37,7 @@ export default class SevenRange extends Component {
     }
     else {
       return (
-        <View style={styles.container} backgroundColor='green'>
+        <View style={styles.container} backgroundColor='grey'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )

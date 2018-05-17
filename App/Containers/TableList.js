@@ -107,7 +107,7 @@ class TableList extends React.PureComponent {
   renderRow ({item}) {
     return (
       <View style={styles.row}>
-          <StockRow symbol={item.title} />
+          <StockRow symbol={item.title}/>
       </View>
     )
   }

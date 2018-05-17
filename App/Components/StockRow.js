@@ -13,6 +13,7 @@ import SevenRange from './SevenRange'
 import SevenRangeVol from './SevenRangeVol'
 import FifteenRange from './FifteenRange'
 import Buy from './Buy'
+import HighPer from './HighPer'
 import Range from './Range'
 import SellPressUp from './SellPressUp'
 import SellPressDown from './SellPressDown'
@@ -310,12 +311,16 @@ export default class StockRow extends Component {
        //var thirtyRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        // this.setState({'fifteenRange': fifteenRange});
 
-       // var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
-       // this.setState({'sevenRange': sevenRange});
+       var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sevenRange': sevenRange});
 
        var diff = parseFloat(closePrice-lowPrice7).toFixed(2);
-       var sevenRangeVol = parseFloat((diff*100)/lowPrice7).toFixed(2);
-       this.setState({'sevenRangeVol': sevenRangeVol});
+       var sevenRangeVolUp = parseFloat((diff*100)/lowPrice7).toFixed(2);
+       this.setState({'sevenRangeVolUp': sevenRangeVolUp});
+
+       var diff2 = parseFloat(highPrice7-closePrice).toFixed(2);
+       var sevenRangeVolDown = parseFloat((diff2*100)/highPrice7).toFixed(2);
+       this.setState({'sevenRangeVolDown': sevenRangeVolDown});
 
        var createGroupedArray = function(arr, chunkSize) {
          var groups = [], i;
@@ -336,20 +341,41 @@ export default class StockRow extends Component {
          }
          else break;
        }
+       if(newLow>closePrice) newLow=closePrice;
        this.setState({'newLow': parseFloat(newLow).toFixed(2)});
-       var predPrice = parseFloat(newLow+(newLow*0.004)).toFixed(2);
+       var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
        var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
        this.setState({'predPrice': predPrice});
        var newdiff = parseFloat(closePrice-newLow).toFixed(2);
        var newVol = parseFloat((diff*100)/newLow).toFixed(2);
        this.setState({'newVol': newVol});
 
+       var higharr = createGroupedArray(high.reverse(), 5);
+       var highp = higharr.map(function(n){
+         return Math.max.apply(null,n);
+       });
+       var newHigh = highp[0];
+       for(var i=1;i<highp.length;i++){
+         if(highp[i]>=newHigh){
+           newHigh = highp[i];
+         }
+         else break;
+       }
+       if(newHigh<closePrice) newHigh=closePrice;
+       this.setState({'newHigh': parseFloat(newHigh).toFixed(2)});
+
+       var maxbottom = parseFloat(newHigh-(newHigh*0.007)).toFixed(2);
+       this.setState({'maxbottom': maxbottom});
+
+       var highper = parseFloat(((highPrice-closePrice)*100)/highPrice).toFixed(2);
+       this.setState({'highper': highper});
+
        var sellingPressDown7 = (openPrice7<closePrice) ? Math.round(((openPrice7-lowPrice7)/(highPrice7-lowPrice7))*100) : Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sellingPressDown7': sellingPressDown7});
        var sellingPressUp7 = (openPrice7<closePrice) ? Math.round(((highPrice7-closePrice)/(highPrice7-lowPrice7))*100) : Math.round(((highPrice7-openPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sellingPressUp7': sellingPressUp7});
-       var sevenRange = 100 - (sellingPressUp7+sellingPressDown7);
-       this.setState({'sevenRange': sevenRange});
+       // var sevenRange = 100 - (sellingPressUp7+sellingPressDown7);
+       // this.setState({'sevenRange': sevenRange});
        //var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
        //this.setState({'hhRange': hhRange});
        // this.setState({'hhVolatility': hhVolatility});
@@ -365,7 +391,10 @@ export default class StockRow extends Component {
 
       //this.handlePushNotification(symbol, "BUY", time);
       var shares = Math.round(10000/closePrice);
+      this.setState({'shares': shares});
 
+      var limit = parseFloat(predPrice*0.005).toFixed(2);
+      this.setState({'limit': limit});
 
         if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
@@ -374,32 +403,32 @@ export default class StockRow extends Component {
             if(this.state.notify){
               this.setState({'notify': false});
               this.setState({'buynotify': true});
-              this.handlePushNotification(symbol, "BUY", time, shares);
+              // this.handlePushNotification(symbol, "BUY", time, shares);
             }
           }
           if(this.state.buynotify){
             if(sevenRangeVol>0.5){
               this.setState({'buynotify': false});
-              this.handlePushNotification(symbol, "SELL", time, shares);
+              // this.handlePushNotification(symbol, "SELL", time, shares);
             }
           }
         }
-        else if(closePrice>this.state.prevHighPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice){
+        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice){
           this.setState({'buy': "Buy"});
           // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
-          if(closePrice>predPrice) {
+          if(closePrice>newLow && closePrice<=predPrice) {
             if(this.state.notify){
               this.setState({'notify': false});
               this.setState({'buynotify': true});
-              this.handlePushNotification(symbol, "BUY", time, shares);
+              // this.handlePushNotification(symbol, "BUY", time, shares);
             }
           }
-          if(this.state.buynotify){
-            if(sevenRangeVol>0.5){
-              this.setState({'buynotify': false});
-              this.handlePushNotification(symbol, "SELL", time, shares);
-            }
-          }
+          // if(this.state.buynotify){
+          //   if(sevenRangeVol>0.5){
+          //     this.setState({'buynotify': false});
+          //     this.handlePushNotification(symbol, "SELL", time, shares);
+          //   }
+          // }
         }
         else {
           this.setState({'buy': "NA"});
@@ -411,17 +440,16 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy"){
+    if(this.state.buy=="Buy" && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
             <Updated closePrice={this.state.closePrice}/>
-            <DayRange text={this.state.dayRange} open={this.state.openPrice} close={this.state.closePrice}/>
+            <Buy text={this.state.shares}/>
             <Range lowPrice={this.state.newLow} predPrice={this.state.predPrice}/>
-            <SevenRange text={this.state.sevenRange} open={this.state.openPrice7} close={this.state.closePrice}/>
-            <SellPressUp text={this.state.sellingPressUp7} sla="50"/>
-            <SellPressDown text={this.state.sellingPressDown7} sla="50"/>
-            <SevenRangeVol text={this.state.sevenRangeVol} open={this.state.openPrice} close={this.state.closePrice}/>
+            <SevenRangeVol up={this.state.sevenRangeVolUp} down={this.state.sevenRangeVolDown}/>
+            <HighPer text={this.state.highper}/>
+            <Updated closePrice={this.state.limit}/>
             <PushController />
           </View>
         )

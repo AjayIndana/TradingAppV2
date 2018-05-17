@@ -19,10 +19,19 @@ export default class Buy extends Component {
   // }
 
   render () {
-    return (
-      <View style={styles.container} backgroundColor='grey'>
-        <Text style={styles.textbox}>{this.props.text}</Text>
-      </View>
-    )
+    if(this.props.text<0.5){
+      return (
+        <View style={styles.container} backgroundColor='green'>
+          <Text style={styles.textbox}>{this.props.text}</Text>
+        </View>
+      )
+    }
+    else {
+      return (
+        <View style={styles.container} backgroundColor='grey'>
+          <Text style={styles.textbox}>{this.props.text}</Text>
+        </View>
+      )
+    }
   }
 }
