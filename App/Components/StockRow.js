@@ -89,7 +89,7 @@ export default class StockRow extends Component {
   }
 
   async getPreviousPrice(symbol){
-      return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=3d&includePrePost=false&interval=1d')
+      return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=10d&includePrePost=false&interval=1d')
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
@@ -97,6 +97,22 @@ export default class StockRow extends Component {
             this.setState({'prevLowPrice': result["low"][1]});
             this.setState({'oneHighPrice': result["high"][0]});
             this.setState({'oneLowPrice': result["low"][0]});
+
+            var low = result.map(function(n){
+             // if(n.low!=0 && n.low!=-1) return n.low;
+             return n["low"];
+              });
+            lowp=low.filter(function(n){ return n != undefined });
+            var count=1;
+            var newLow = lowp[0];
+            for(var i=1;i<lowp.length;i++){
+              if(lowp[i]<=newLow){
+                newLow = lowp[i];
+                count = count+1;
+              }
+              else break;
+            }
+            this.setState({'count': count});
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -413,7 +429,7 @@ export default class StockRow extends Component {
             }
           }
         }
-        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice){
+        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
           // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
