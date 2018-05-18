@@ -154,7 +154,6 @@ export default class StockRow extends Component {
         .then((response) => {
            var fields =  JSON.stringify(response);
             this.setState({'closePrice': JSON.parse(fields)["_bodyText"].split("|")[1]});
-            //return JSON.parse(fields)["_bodyText"].split("|")[1];
         })
         .then(() => {
           if(symbol.includes("IXIC")){
@@ -167,24 +166,6 @@ export default class StockRow extends Component {
         });
     }
     else {
-      // return fetch('https://api.iextrading.com/1.0/tops?symbols='+ symbol)
-      //   .then((response) => response.json())
-      //   .then((responseJson) => {
-      //       var closePrice = responseJson[0]["lastSalePrice"].toString();
-      //       //console.log(closePrice);
-      //       this.setState({'closePrice': closePrice});
-      //       this.setState({'sevenRange': ''});
-      //       this.setState({'volumePercent': ''});
-      //       this.setState({'updated': ''});
-      //       //return JSON.parse(fields)["_bodyText"].split("|")[1];
-      //   })
-      //   .then(() => {
-      //     this.updateRow(symbol)
-      //   })
-      //   .catch((error,symbol,response) => {
-      //     console.log(error);
-      //   });
-
       return fetch('https://quote.cnbc.com/quote-html-webservice/quote.htm?symbols='+symbol+'&partnerId=2&requestMethod=quick&exthrs=1&noform=1&fund=1&output=jsonp&events=1&callback=quoteHandler1')
       .then((response) => {
             var result = JSON.parse(response["_bodyText"].split("quoteHandler1(")[1].slice(0, -1));
@@ -203,8 +184,6 @@ export default class StockRow extends Component {
   }
 
   async updateRow(symbol) {
-   //return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=1d&includePrePost=false&interval=1m')
-
     var today = new Date();
     var dd = today.getDate();
     var mm = today.getMonth()+1; //January is 0!
@@ -218,45 +197,12 @@ export default class StockRow extends Component {
 
     var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json'
 
-
-        // Simulator code
-      //   dd =  today.getDate() - 2;
-      //   if(dd<10){
-      //       dd='0'+dd;
-      //   }
-      //   var hours = today.getHours() -1;
-      //   if(hours<10){
-      //       hours='0'+hours;
-      //   }
-      //   var min = today.getMinutes() - 30;
-      //   if(min<10){
-      //       min='0'+min;
-      //   }
-      //   var sec = today.getSeconds();
-      //   if(sec<10){
-      //       sec='0'+sec;
-      //   }
-      //
-      //   url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+min+sec+'/adjusted/EST5EDT.json'
-      // //  console.log(url);
-        // Simulator code
-
     return fetch(url)
      .then((response) => response.json())
      .then((responseJson) => {
        responseJson = responseJson["barData"]["priceBars"];
 
       var closePrice = this.state.closePrice;
-
-      // Simulator code
-
-       // var close = responseJson.map(function(n){
-       // return n["close"];
-       //  });
-       //  closePrice = close[close.length-1];
-       //  this.setState({'closePrice': closePrice});
-
-     // Simulator code
 
        var open = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
@@ -363,20 +309,12 @@ export default class StockRow extends Component {
        this.setState({'bearVolSum': bearVolSum});
        this.setState({'todaysVolume': todaysVolume});
 
-       // var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
-       // var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
-
        var sellingPressDown = (openPrice<closePrice) ? Math.round(((openPrice-lowPrice)/(highPrice-lowPrice))*100) : Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
        this.setState({'sellingPressDown': sellingPressDown});
        var sellingPressUp = (openPrice<closePrice) ? Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100) : Math.round(((highPrice-openPrice)/(highPrice-lowPrice))*100);
        this.setState({'sellingPressUp': sellingPressUp});
        var dayRange = 100 - (sellingPressUp+sellingPressDown);
        this.setState({'dayRange': dayRange});
-       //this.setState({'dayVolatility': dayVolatility});
-
-       //var fifteenRange = Math.round(((closePrice-lowPrice15)/(highPrice15-lowPrice15))*100);
-       //var thirtyRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
-       // this.setState({'fifteenRange': fifteenRange});
 
        var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sevenRange': sevenRange});
@@ -437,26 +375,10 @@ export default class StockRow extends Component {
        var highper = parseFloat(((highPrice-closePrice)*100)/highPrice).toFixed(2);
        this.setState({'highper': highper});
 
-       var sellingPressDown7 = (openPrice7<closePrice) ? Math.round(((openPrice7-lowPrice7)/(highPrice7-lowPrice7))*100) : Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
-       this.setState({'sellingPressDown7': sellingPressDown7});
-       var sellingPressUp7 = (openPrice7<closePrice) ? Math.round(((highPrice7-closePrice)/(highPrice7-lowPrice7))*100) : Math.round(((highPrice7-openPrice7)/(highPrice7-lowPrice7))*100);
-       this.setState({'sellingPressUp7': sellingPressUp7});
-       // var sevenRange = 100 - (sellingPressUp7+sellingPressDown7);
-       // this.setState({'sevenRange': sevenRange});
-       //var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
-       //this.setState({'hhRange': hhRange});
-       // this.setState({'hhVolatility': hhVolatility});
-      // this.setState({update: true});
-      // return closePrice;
-
-      // var dayVolatilityPrice = (Math.round(lowPrice*100)/100).toString() + "-" + (Math.round(highPrice*100)/100).toString();
-      // this.setState({'dayVolatilityPrice': dayVolatilityPrice});
-
       var today = new Date();
       var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
       this.setState({'updated': time});
 
-      //this.handlePushNotification(symbol, "BUY", time);
       var shares = Math.round(10000/closePrice);
       this.setState({'shares': shares});
 
@@ -478,37 +400,9 @@ export default class StockRow extends Component {
 
         if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
-        //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
-          if(closePrice>newLow && closePrice<=predPrice) {
-            if(this.state.notify){
-              this.setState({'notify': false});
-              this.setState({'buynotify': true});
-              // this.handlePushNotification(symbol, "BUY", time, shares);
-            }
-          }
-          // if(this.state.buynotify){
-          //   if(sevenRangeVol>0.5){
-          //     this.setState({'buynotify': false});
-          //     // this.handlePushNotification(symbol, "SELL", time, shares);
-          //   }
-          // }
         }
         else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
-          // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
-          if(closePrice>newLow && closePrice<=predPrice) {
-            if(this.state.notify){
-              this.setState({'notify': false});
-              this.setState({'buynotify': true});
-              // this.handlePushNotification(symbol, "BUY", time, shares);
-            }
-          }
-          // if(this.state.buynotify){
-          //   if(sevenRangeVol>0.5){
-          //     this.setState({'buynotify': false});
-          //     this.handlePushNotification(symbol, "SELL", time, shares);
-          //   }
-          // }
         }
         else {
           this.setState({'buy': "NA"});
