@@ -95,11 +95,11 @@ export default class StockRow extends Component {
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
-            this.setState({'todaysVolume': result["volume"].pop()});
             result["low"].reverse().shift(-1);
             result["high"].reverse().shift(-1);
             result["open"].reverse().shift(-1);
             result["close"].reverse().shift(-1);
+            result["volume"].reverse().shift(-1);
             this.setState({'prevHighPrice': result["high"][0]});
             this.setState({'prevLowPrice': result["low"][0]});
             this.setState({'prevOpenPrice': result["open"][0]});
@@ -119,23 +119,9 @@ export default class StockRow extends Component {
               }
               else break;
             }
-        
-            var highp = result["high"];
-            var newcount=1;
-            var newHigh = highp[0];
-            for(var i=1;i<highp.length;i++){
-              if(highp[i]<=newHigh){
-                newHigh = highp[i];
-                newcount = newcount+1;
-              }
-              else break;
-            }
-        
-            if(count>newcount) {
-              count=newcount;
-            }
-        
+
             this.setState({'count': count});
+
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -146,12 +132,50 @@ export default class StockRow extends Component {
       return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=2d&includePrePost=false&interval=1m')
       .then((response) => response.json())
       .then((responseJson) => {
-            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
-            var len = result["volume"].length-390;
+            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0];
+            var totallen = result["volume"].length
+            var len = totallen-390;
             var vol = result["volume"].slice(0,len)
-            var vol = vol.filter(function(n){ return n != undefined });
+            vol = vol.filter(function(n){ return n != undefined });
             var prevVolume = vol.reduce((a, b) => a + b, 0);
             this.setState({'prevVolume': prevVolume});
+            var todayVol = result["volume"].slice(390,totallen);
+            todayVol = todayVol.filter(function(n){ return n != undefined });
+            var todaysVolume = todayVol.reduce((a, b) => a + b, 0);
+            var todayOpen = result["open"].slice(390,totallen);
+            todayOpen = todayOpen.filter(function(n){ return n != undefined });
+            var todayClose = result["close"].slice(390,totallen);
+            todayClose = todayClose.filter(function(n){ return n != undefined });
+            var i=0;
+            var bullVol = todayVol.filter(function(n) {
+              if(todayOpen[i]>todayClose[i]) {
+                i=i+1;
+                return 0;
+              }
+              else{
+                i=i+1;
+                return n;
+              }
+            });
+            var bullVolSum = bullVol.reduce((a, b) => a + b, 0);
+            console.log(symbol + "bull:" + bullVolSum);
+            this.setState({'bullVolSum': bullVolSum});
+            var j=0;
+            var bearVol = todayVol.filter(function(n) {
+              if(todayOpen[j]<todayClose[j]) {
+                j=j+1;
+                return 0;
+              }
+              else{
+                j=j+1;
+                return n;
+              }
+            });
+            var bearVolSum = bearVol.reduce((a, b) => a + b, 0);
+            console.log(symbol + "bear:" + bearVolSum);
+            console.log(symbol + "total:" + todaysVolume);
+            this.setState({'bearVolSum': bearVolSum});
+            this.setState({'todaysVolume': todaysVolume});
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -451,21 +475,21 @@ export default class StockRow extends Component {
 
       var limit = parseFloat(predPrice*0.005).toFixed(2);
       this.setState({'limit': limit});
-      
+
       var volChange = this.state.todaysVolume - this.state.prevVolume;
-      
+
       if(volChange>0) {
-        var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(2);
+        var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
         this.setState({'volPer': volPer});
         this.setState({'volChange': 'up'});
       }
       else {
-        var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(2);
+        var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(0);
         this.setState({'volPer': volPer});
         this.setState({'volChange': 'down'});
       }
 
-        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
+        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
         //  if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
@@ -475,14 +499,14 @@ export default class StockRow extends Component {
               // this.handlePushNotification(symbol, "BUY", time, shares);
             }
           }
-          if(this.state.buynotify){
-            if(sevenRangeVol>0.5){
-              this.setState({'buynotify': false});
-              // this.handlePushNotification(symbol, "SELL", time, shares);
-            }
-          }
+          // if(this.state.buynotify){
+          //   if(sevenRangeVol>0.5){
+          //     this.setState({'buynotify': false});
+          //     // this.handlePushNotification(symbol, "SELL", time, shares);
+          //   }
+          // }
         }
-        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && this.state.volChange=="up" && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
+        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
           // if(sevenRangeVol>0.4 && sellingPressUp<30 && (sellingPressDown7>50 || ((sellingPressUp7<10 || sevenRange>80) && (openPrice7<closePrice)))) {
           if(closePrice>newLow && closePrice<=predPrice) {
@@ -509,7 +533,7 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
+    if(this.state.buy=="Buy" && this.state.bullVolSum>this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
