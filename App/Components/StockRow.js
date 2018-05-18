@@ -60,11 +60,11 @@ export default class StockRow extends Component {
     this.handlePushNotification = this.handlePushNotification.bind(this);
     this._onPressButton = this._onPressButton.bind(this);
     this.getPreviousPrice = this.getPreviousPrice.bind(this);
-    this.getPreviousVolume = this.getPreviousVolume.bind(this);
+    //this.getPreviousVolume = this.getPreviousVolume.bind(this);
   }
 
   componentDidMount = () => {
-    this.getPreviousVolume(this.state.symbol);
+    //this.getPreviousVolume(this.state.symbol);
     this.getPreviousPrice(this.state.symbol);
     this.getClosePrice(this.state.symbol);
     this.setState({'notify': true});
@@ -128,25 +128,6 @@ export default class StockRow extends Component {
         });
     }
 
-  async getPreviousVolume(symbol){
-      return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=2d&includePrePost=false&interval=1m')
-      .then((response) => response.json())
-      .then((responseJson) => {
-            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0];
-            var totallen = result["volume"].length
-            var len = totallen-390;
-            var vol = result["volume"].slice(0,len)
-            vol = vol.filter(function(n){ return n != undefined });
-            var prevVolume = vol.reduce((a, b) => a + b, 0);
-            this.setState({'prevVolume': prevVolume});
-        })
-        .catch((error,symbol,response) => {
-          console.log(error);
-        });
-    }
-
-
-
   async getClosePrice(symbol){
     if(symbol.includes("IXIC")){
       symbol = "IXIC";
@@ -202,7 +183,7 @@ export default class StockRow extends Component {
      .then((responseJson) => {
        responseJson = responseJson["barData"]["priceBars"];
 
-      var closePrice = this.state.closePrice;
+       var closePrice = this.state.closePrice;
 
        var open = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
@@ -211,6 +192,57 @@ export default class StockRow extends Component {
        open=open.filter(function(n){ return n != undefined });
        var openPrice = parseFloat(open[0]).toFixed(2);
        this.setState({'openPrice': openPrice});
+
+       var getPreviousVolume = function(symbol, length){
+         var count = 1;
+         var prevVolume = 0;
+         var fetchNow = function() {
+           var yesterday = new Date();
+           yesterday.setDate(yesterday.getDate() - count);
+           var dd = yesterday.getDate();
+           var mm = yesterday.getMonth()+1; //January is 0!
+           var yyyy = yesterday.getFullYear();
+           if(dd<10){
+               dd='0'+dd;
+           }
+           if(mm<10){
+               mm='0'+mm;
+           }
+
+           var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json'
+
+           fetch(url)
+           .then((response) => response.json())
+           .then((responseJson) => {
+                 responseJson = responseJson["barData"]["priceBars"];
+
+                 var volume = responseJson.map(function(n){
+                   return n["volume"]
+                   });
+
+                 volume=volume.filter(function(n){ return n != undefined });
+                 if(volume.length>0){
+                   var vol = volume.slice(0,length);
+                   prevVolume = vol.reduce((a, b) => a + b, 0);
+                   this.setState({'prevVolume': prevVolume});
+                 }
+                 else {
+                   count = count+1;
+                   fetchNow();
+                 }
+                 // if(symbol=="AMD") {
+                 //   console.log(prevVolume);
+                 // }
+             })
+             .catch((error,symbol,response) => {
+               console.log(error);
+             });
+           }.bind(this)
+
+           fetchNow();
+         }.bind(this)
+
+       getPreviousVolume(symbol, open.length);
 
        var close = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
