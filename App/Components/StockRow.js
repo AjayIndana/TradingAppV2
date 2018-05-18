@@ -139,43 +139,6 @@ export default class StockRow extends Component {
             vol = vol.filter(function(n){ return n != undefined });
             var prevVolume = vol.reduce((a, b) => a + b, 0);
             this.setState({'prevVolume': prevVolume});
-            var todayVol = result["volume"].slice(390,totallen);
-            todayVol = todayVol.filter(function(n){ return n != undefined });
-            var todaysVolume = todayVol.reduce((a, b) => a + b, 0);
-            var todayOpen = result["open"].slice(390,totallen);
-            todayOpen = todayOpen.filter(function(n){ return n != undefined });
-            var todayClose = result["close"].slice(390,totallen);
-            todayClose = todayClose.filter(function(n){ return n != undefined });
-            var i=0;
-            var bullVol = todayVol.filter(function(n) {
-              if(todayOpen[i]>todayClose[i]) {
-                i=i+1;
-                return 0;
-              }
-              else{
-                i=i+1;
-                return n;
-              }
-            });
-            var bullVolSum = bullVol.reduce((a, b) => a + b, 0);
-            console.log(symbol + "bull:" + bullVolSum);
-            this.setState({'bullVolSum': bullVolSum});
-            var j=0;
-            var bearVol = todayVol.filter(function(n) {
-              if(todayOpen[j]<todayClose[j]) {
-                j=j+1;
-                return 0;
-              }
-              else{
-                j=j+1;
-                return n;
-              }
-            });
-            var bearVolSum = bearVol.reduce((a, b) => a + b, 0);
-            console.log(symbol + "bear:" + bearVolSum);
-            console.log(symbol + "total:" + todaysVolume);
-            this.setState({'bearVolSum': bearVolSum});
-            this.setState({'todaysVolume': todaysVolume});
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -299,8 +262,15 @@ export default class StockRow extends Component {
         // if(n.high!=0 && n.high!=-1) return n.high;
         return n["open"];
          });
+       open=open.filter(function(n){ return n != undefined });
        var openPrice = parseFloat(open[0]).toFixed(2);
        this.setState({'openPrice': openPrice});
+
+       var close = responseJson.map(function(n){
+        // if(n.high!=0 && n.high!=-1) return n.high;
+        return n["close"];
+         });
+       close=close.filter(function(n){ return n != undefined });
 
        var high = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
@@ -357,24 +327,41 @@ export default class StockRow extends Component {
        var open7 = open.slice(open.length-6, open.length);
        var openPrice7 = parseFloat(open7[0]).toFixed(2);
        this.setState({'openPrice7': openPrice7});
-       // var volume = responseJson.map(function(n){
-       //   //if(n.volume!=0 && n.volume!=-1) return n.volume;
-       //   return n["volume"]
-       //   });
-       //
-       // volume=volume.filter(function(n){ return n != undefined });
-       // if(volume.length>7){
-       //   var volume7 = volume.slice(volume.length-7, volume.length);
-       //   var avgVolume = volume7.reduce(function(a, b) { return a + b; }, 0);
-       //   avgVolume = avgVolume/7;
-       //   var volumePercent = Math.round((volume[volume.length-1]/avgVolume)*100);
-       //   this.setState({'volumePercent': volumePercent});
-       // } else {
-       //   var avgVolume = volume.reduce(function(a, b) { return a + b; }, 0);
-       //   avgVolume = avgVolume/volume.length;
-       //   var volumePercent = Math.round((volume[volume.length-1]/avgVolume)*100);
-       //   this.setState({'volumePercent': volumePercent});
-       // }
+       var volume = responseJson.map(function(n){
+         //if(n.volume!=0 && n.volume!=-1) return n.volume;
+         return n["volume"]
+         });
+
+       volume=volume.filter(function(n){ return n != undefined });
+
+       var todaysVolume = volume.reduce((a, b) => a + b, 0);
+       var i=0;
+       var bullVol = volume.filter(function(n) {
+         if(open[i]>close[i]) {
+           i=i+1;
+           return 0;
+         }
+         else{
+           i=i+1;
+           return n;
+         }
+       });
+       var bullVolSum = bullVol.reduce((a, b) => a + b, 0);
+       this.setState({'bullVolSum': bullVolSum});
+       var j=0;
+       var bearVol = volume.filter(function(n) {
+         if(open[j]<close[j]) {
+           j=j+1;
+           return 0;
+         }
+         else{
+           j=j+1;
+           return n;
+         }
+       });
+       var bearVolSum = bearVol.reduce((a, b) => a + b, 0);
+       this.setState({'bearVolSum': bearVolSum});
+       this.setState({'todaysVolume': todaysVolume});
 
        // var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
        // var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
