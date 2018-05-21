@@ -367,45 +367,79 @@ export default class StockRow extends Component {
          return groups;
        }
 
-       var lowarr = createGroupedArray(low.reverse(), 5);
-       var lowp = lowarr.map(function(n){
+       var low_as_arr = createGroupedArray(low, 5);
+       var low_as_p = low_as_arr.map(function(n){
          return Math.min.apply(null,n);
        });
-       var newLow = lowp[0];
-       for(var i=1;i<lowp.length;i++){
-         if(lowp[i]<=newLow){
-           newLow = lowp[i];
-         }
-         else break;
+
+       var outs=[], old_outs=[], in_outs=[], L= low_as_p.length, i=0, prev, lh, hh, ol=0;
+       while(i<L){
+           old_outs=in_outs;
+           if(old_outs.length>0) {
+             ol = Math.min.apply(null,old_outs);
+           }
+           in_outs=[];
+           prev= low_as_p[i];
+           while(low_as_p[++i]<prev) in_outs.push(low_as_p[i]);
+           outs = in_outs;
+           if(in_outs.length>0) {
+             lh = Math.min.apply(null,in_outs);
+             hh = 0;
+           }
+           else {
+             hh = prev;
+             lh = 0;
+           }
        }
-       if(newLow>closePrice) newLow=closePrice;
-       this.setState({'newLow': parseFloat(newLow).toFixed(2)});
-       var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
-       var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
-       this.setState({'predPrice': predPrice});
-       var newdiff = parseFloat(closePrice-newLow).toFixed(2);
-       var newVol = parseFloat((diff*100)/newLow).toFixed(2);
-       this.setState({'newVol': newVol});
 
-       var higharr = createGroupedArray(high.reverse(), 5);
-       var highp = higharr.map(function(n){
-         return Math.max.apply(null,n);
-       });
-       var newHigh = highp[0];
-       for(var i=1;i<highp.length;i++){
-         if(highp[i]>=newHigh){
-           newHigh = highp[i];
-         }
-         else break;
+     var lowarr = createGroupedArray(low.reverse(), 5);
+
+     var lowp = lowarr.map(function(n){
+       return Math.min.apply(null,n);
+     });
+     var newLow = lowp[0];
+     for(var i=1;i<lowp.length;i++){
+       if(lowp[i]<=newLow){
+         newLow = lowp[i];
        }
-       if(newHigh<closePrice) newHigh=closePrice;
-       this.setState({'newHigh': parseFloat(newHigh).toFixed(2)});
+       else break;
+     }
 
-       var maxbottom = parseFloat(newHigh-(newHigh*0.007)).toFixed(2);
-       this.setState({'maxbottom': maxbottom});
+     if(newLow>closePrice) newLow=closePrice;
+     this.setState({'newLow': parseFloat(newLow).toFixed(2)});
 
-       var highper = parseFloat(((highPrice-closePrice)*100)/highPrice).toFixed(2);
-       this.setState({'highper': highper});
+     var is_buy = 0;
+     if(hh>0 || newLow>1.2*lh || (newLow>=lh && lh>1.2*ol)) {
+       is_buy = 1;
+     }
+    this.setState({'is_buy': is_buy});
+
+     var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
+     var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
+     this.setState({'predPrice': predPrice});
+     var newdiff = parseFloat(closePrice-newLow).toFixed(2);
+     var newVol = parseFloat((diff*100)/newLow).toFixed(2);
+     this.setState({'newVol': newVol});
+
+     var higharr = createGroupedArray(high.reverse(), 5);
+     var highp = higharr.map(function(n){
+       return Math.max.apply(null,n);
+     });
+     var newHigh = highp[0];
+     for(var i=1;i<highp.length;i++){
+       if(highp[i]>=newHigh){
+         newHigh = highp[i];
+       }
+       else break;
+     }
+     if(newHigh<closePrice) newHigh=closePrice;
+     this.setState({'newHigh': parseFloat(newHigh).toFixed(2)});
+
+     var maxbottom = parseFloat(newHigh-(newHigh*0.007)).toFixed(2);
+     this.setState({'maxbottom': maxbottom});
+
+     var highper = parseFloat(((highPrice-closePrice)*100)/highPrice).toFixed(2);
+     this.setState({'highper': highper});
 
       var today = new Date();
       var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
@@ -446,7 +480,7 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.bullVolSum>this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
+    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
