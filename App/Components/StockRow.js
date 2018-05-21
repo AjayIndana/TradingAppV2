@@ -367,10 +367,37 @@ export default class StockRow extends Component {
          return groups;
        }
 
-       var low_as_arr = createGroupedArray(low, 5);
+       var low_as_arr_rv = createGroupedArray(low.slice().reverse(), 5);
+       var low_as_arr = low_as_arr_rv.slice().reverse();
+       var high_as_arr_rv = createGroupedArray(high.slice().reverse(), 5);
+       var high_as_arr = high_as_arr_rv.slice().reverse();
        var low_as_p = low_as_arr.map(function(n){
          return Math.min.apply(null,n);
        });
+       var high_as_p = high_as_arr.map(function(n){
+         return Math.max.apply(null,n);
+       });
+
+
+       var h_outs=[], h_old_outs=[], h_in_outs=[], L= high_as_p.length, j=0, h_prev, h_lh, h_hh, h_ol=0;
+       while(j<L){
+           h_old_outs=h_in_outs;
+           if(h_old_outs.length>0) {
+             h_ol = Math.min.apply(null,h_old_outs);
+           }
+           h_in_outs=[];
+           h_prev= high_as_p[i];
+           while(high_as_p[++i]<h_prev) h_in_outs.push(high_as_p[i]);
+           h_outs = h_in_outs;
+           if(h_in_outs.length>0) {
+             h_lh = Math.min.apply(null,h_in_outs);
+             h_hh = 0;
+           }
+           else {
+             h_hh = prev;
+             h_lh = 0;
+           }
+       }
 
        var outs=[], old_outs=[], in_outs=[], L= low_as_p.length, i=0, prev, lh, hh, ol=0;
        while(i<L){
@@ -392,7 +419,7 @@ export default class StockRow extends Component {
            }
        }
 
-     var lowarr = createGroupedArray(low.reverse(), 5);
+     var lowarr = createGroupedArray(low.slice().reverse(), 5);
 
      var lowp = lowarr.map(function(n){
        return Math.min.apply(null,n);
@@ -410,7 +437,9 @@ export default class StockRow extends Component {
 
      var is_buy = 0;
      if(hh>0 || newLow>1.2*lh || (newLow>=lh && lh>1.2*ol)) {
-       is_buy = 1;
+       if(h_hh>0 || closePrice>=h_lh) {
+         is_buy = 1;
+      }
      }
     this.setState({'is_buy': is_buy});
 
@@ -421,7 +450,7 @@ export default class StockRow extends Component {
      var newVol = parseFloat((diff*100)/newLow).toFixed(2);
      this.setState({'newVol': newVol});
 
-     var higharr = createGroupedArray(high.reverse(), 5);
+     var higharr = createGroupedArray(high.slice().reverse(), 5);
      var highp = higharr.map(function(n){
        return Math.max.apply(null,n);
      });
@@ -480,7 +509,7 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice<=this.state.predPrice && this.state.closePrice>this.state.maxbottom){
+    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
