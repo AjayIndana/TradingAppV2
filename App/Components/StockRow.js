@@ -386,8 +386,8 @@ export default class StockRow extends Component {
              h_ol = Math.min.apply(null,h_old_outs);
            }
            h_in_outs=[];
-           h_prev= high_as_p[i];
-           while(high_as_p[++i]<h_prev) h_in_outs.push(high_as_p[i]);
+           h_prev= high_as_p[j];
+           while(high_as_p[++j]<h_prev) h_in_outs.push(high_as_p[j]);
            h_outs = h_in_outs;
            if(h_in_outs.length>0) {
              h_lh = Math.min.apply(null,h_in_outs);
@@ -509,7 +509,7 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom){
+    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom && this.state.closePrice<=this.state.predPrice){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
