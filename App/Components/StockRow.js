@@ -378,27 +378,6 @@ export default class StockRow extends Component {
          return Math.max.apply(null,n);
        });
 
-
-       var h_outs=[], h_old_outs=[], h_in_outs=[], L= high_as_p.length, j=0, h_prev, h_lh, h_hh, h_ol=0;
-       while(j<L){
-           h_old_outs=h_in_outs;
-           if(h_old_outs.length>0) {
-             h_ol = Math.min.apply(null,h_old_outs);
-           }
-           h_in_outs=[];
-           h_prev= high_as_p[j];
-           while(high_as_p[++j]<h_prev) h_in_outs.push(high_as_p[j]);
-           h_outs = h_in_outs;
-           if(h_in_outs.length>0) {
-             h_lh = Math.min.apply(null,h_in_outs);
-             h_hh = 0;
-           }
-           else {
-             h_hh = prev;
-             h_lh = 0;
-           }
-       }
-
        var outs=[], old_outs=[], in_outs=[], L= low_as_p.length, i=0, prev, lh, hh, ol=0;
        while(i<L){
            old_outs=in_outs;
@@ -437,9 +416,11 @@ export default class StockRow extends Component {
 
      var is_buy = 0;
      if(hh>0 || newLow>1.2*lh || (newLow>=lh && lh>1.2*ol)) {
-       if(h_hh>0 || closePrice>=h_lh) {
+       if(high_as_p.length>1) {
+         if(high_as_p[high_as_p.length-1]>high_as_p[high_as_p.length-2]) is_buy = 1;
+      } else if(high_as_p.length==1) {
          is_buy = 1;
-      }
+       }
      }
     this.setState({'is_buy': is_buy});
 
@@ -509,7 +490,7 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom && this.state.closePrice<=this.state.predPrice){
+    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
