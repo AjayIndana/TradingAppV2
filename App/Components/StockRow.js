@@ -417,7 +417,7 @@ export default class StockRow extends Component {
      var is_buy = 0;
      if(hh>0 || newLow>1.2*lh || (newLow>=lh && lh>1.2*ol)) {
        if(high_as_p.length>1) {
-         if(high_as_p[high_as_p.length-1]>high_as_p[high_as_p.length-2]) is_buy = 1;
+         if(high_as_p[high_as_p.length-1]>high_as_p[high_as_p.length-2] && low_as_p[low_as_p.length-1]>low_as_p[low_as_p.length-2]) is_buy = 1;
       } else if(high_as_p.length==1) {
          is_buy = 1;
        }
