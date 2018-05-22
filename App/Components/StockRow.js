@@ -94,27 +94,36 @@ export default class StockRow extends Component {
       return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=10d&includePrePost=false&interval=1d')
       .then((response) => response.json())
       .then((responseJson) => {
-            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0]
-            result["low"].reverse().shift(-1);
-            result["high"].reverse().shift(-1);
-            result["open"].reverse().shift(-1);
-            result["close"].reverse().shift(-1);
-            result["volume"].reverse().shift(-1);
-            this.setState({'prevHighPrice': result["high"][0]});
-            this.setState({'prevLowPrice': result["low"][0]});
-            this.setState({'prevOpenPrice': result["open"][0]});
-            this.setState({'prevClosePrice': result["close"][0]});
-            this.setState({'oneHighPrice': result["high"][1]});
-            this.setState({'oneLowPrice': result["low"][1]});
-            this.setState({'oneOpenPrice': result["open"][1]});
-            this.setState({'oneClosePrice': result["close"][1]});
+            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0];
+            var closePrice = this.state.closePrice;
+            var low = result["low"].slice().reverse();
+            low.shift(-1);
+            var high = result["high"].slice().reverse();
+            high.shift(-1);
+            var open = result["open"].slice().reverse();
+            open.shift(-1);
+            var close = result["close"].slice().reverse();
+            close.shift(-1);
+            this.setState({'prevHighPrice': high[0]});
+            this.setState({'prevLowPrice': low[0]});
+            this.setState({'prevOpenPrice': open[0]});
+            this.setState({'prevClosePrice': close[0]});
+            this.setState({'oneHighPrice': high[1]});
+            this.setState({'oneLowPrice': low[1]});
+            this.setState({'oneOpenPrice': open[1]});
+            this.setState({'oneClosePrice': close[1]});
+        
+            var lowestPrice = Math.min.apply(null,low);
+            var highestPrice = Math.max.apply(null,high);
 
-            var lowp = result["low"];
+            var range = Math.round(((closePrice-lowestPrice)/(highestPrice-lowestPrice))*100);
+            this.setState({'range': range});
+
             var count=1;
-            var newLow = lowp[0];
-            for(var i=1;i<lowp.length;i++){
-              if(lowp[i]<=newLow){
-                newLow = lowp[i];
+            var newLow = low[0];
+            for(var i=1;i<low.length;i++){
+              if(low[i]<=newLow){
+                newLow = low[i];
                 count = count+1;
               }
               else break;
@@ -415,7 +424,7 @@ export default class StockRow extends Component {
      this.setState({'newLow': parseFloat(newLow).toFixed(2)});
 
      var is_buy = 0;
-     if(hh>0 || newLow>1.2*lh || (newLow>=lh && lh>1.2*ol)) {
+     if(hh>0 || newLow>1.002*lh || (newLow>=lh && lh>1.002*ol)) {
        if(high_as_p.length>1) {
          if(high_as_p[high_as_p.length-1]>high_as_p[high_as_p.length-2] && low_as_p[low_as_p.length-1]>low_as_p[low_as_p.length-2]) is_buy = 1;
       } else if(high_as_p.length==1) {
