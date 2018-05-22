@@ -193,6 +193,7 @@ export default class StockRow extends Component {
        responseJson = responseJson["barData"]["priceBars"];
 
        var closePrice = this.state.closePrice;
+       var range = this.state.range;
 
        var open = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
@@ -483,10 +484,10 @@ export default class StockRow extends Component {
         this.setState({'volChange': 'down'});
       }
 
-        if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
+        if((range<50 || range>110) && (closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
           this.setState({'buy': "Buy"});
         }
-        else if((closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
+        else if((range<50 || range>110) && (closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
           this.setState({'buy': "Buy"});
         }
         else {
