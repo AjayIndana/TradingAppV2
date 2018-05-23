@@ -50,6 +50,7 @@ export default class StockRow extends Component {
     }
 
     setInterval(() => {
+      this.getPreviousPrice(this.state.symbol);
       this.getClosePrice(this.state.symbol);
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
@@ -116,7 +117,6 @@ export default class StockRow extends Component {
             // this.setState({'twoLowPrice': low[2]});
             // this.setState({'twoOpenPrice': open[2]});
             // this.setState({'twoClosePrice': close[2]});
-
 
             var lowestPrice = Math.min.apply(null,low);
             var highestPrice = Math.max.apply(null,high);
@@ -376,6 +376,7 @@ export default class StockRow extends Component {
      if(higher_high>0 && lower_high>0) {
          is_buy = 1;
      }
+     this.setState({'is_buy': is_buy});
 
      var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
      this.setState({'predPrice': predPrice});
@@ -401,9 +402,11 @@ export default class StockRow extends Component {
 
       var up_tag = Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100);
 
-        if(range<40 && is_buy == 1 && (prev_bull || today_bull)){
+        if(range<30 && is_buy == 1 && low30.length>25 && (prev_bull || today_bull)){
           this.setState({'buy': "Buy"});
-        } else if(range>110 && is_buy == 1 && closePrice>openPrice && up_tag<10) {
+        } else if(range<30 && is_buy == 1 && low30.length<25 && prev_bull){
+          this.setState({'buy': "Buy"});
+        } else if(range>110 && is_buy == 1 && closePrice>openPrice && (prev_bull || today_bull)) {
           this.setState({'buy': "Buy"});
         } else {
           this.setState({'buy': "NA"});
