@@ -108,6 +108,15 @@ export default class StockRow extends Component {
             this.setState({'prevLowPrice': low[0]});
             this.setState({'prevOpenPrice': open[0]});
             this.setState({'prevClosePrice': close[0]});
+            // this.setState({'oneHighPrice': high[1]});
+            // this.setState({'oneLowPrice': low[1]});
+            // this.setState({'oneOpenPrice': open[1]});
+            // this.setState({'oneClosePrice': close[1]});
+            // this.setState({'twoHighPrice': high[2]});
+            // this.setState({'twoLowPrice': low[2]});
+            // this.setState({'twoOpenPrice': open[2]});
+            // this.setState({'twoClosePrice': close[2]});
+
 
             var lowestPrice = Math.min.apply(null,low);
             var highestPrice = Math.max.apply(null,high);
@@ -178,6 +187,14 @@ export default class StockRow extends Component {
        var prevLowPrice = this.state.prevLowPrice;
        var prevOpenPrice = this.state.prevOpenPrice;
        var prevClosePrice = this.state.prevClosePrice;
+       // var oneHighPrice = this.state.oneHighPrice;
+       // var oneLowPrice = this.state.oneLowPrice;
+       // var oneOpenPrice = this.state.oneOpenPrice;
+       // var oneClosePrice = this.state.oneClosePrice;
+       // var twoHighPrice = this.state.twoHighPrice;
+       // var twoLowPrice = this.state.twoLowPrice;
+       // var twoOpenPrice = this.state.twoOpenPrice;
+       // var twoClosePrice = this.state.twoClosePrice;
 
        var open = responseJson.map(function(n){ return n["open"] });
        open=open.filter(function(n){ return n != undefined });
@@ -328,12 +345,14 @@ export default class StockRow extends Component {
             up_tag = Math.round(((high-close)/(high-low))*100);
             bull = Math.round(((close-open)/(high-low))*100);
           }
-          if((bottom_tag>50 && up_tag<10) || (bull>80 && up_tag<10)) return true;
+          if((bottom_tag>50 && up_tag<15) || (bull>80 && up_tag<15)) return true;
           else return false;
        }
 
      var higher_high = goingUp(high_as_p);
      var lower_high = goingUp(low_as_p);
+     // var one_bull = isHammerOrBull(oneOpenPrice, oneClosePrice, oneHighPrice, oneLowPrice);
+     // var two_bull = isHammerOrBull(twoOpenPrice, twoClosePrice, twoHighPrice, twoLowPrice);
      var prev_bull = isHammerOrBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
      var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
 
@@ -380,10 +399,13 @@ export default class StockRow extends Component {
         this.setState({'volChange': 'down'});
       }
 
-        if((range<40 || range>110) && is_buy == 1 && (prev_bull || today_bull)){
+      var up_tag = Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100);
+
+        if(range<40 && is_buy == 1 && (prev_bull || today_bull)){
           this.setState({'buy': "Buy"});
-        }
-        else {
+        } else if(range>110 && is_buy == 1 && closePrice>openPrice && up_tag<10) {
+          this.setState({'buy': "Buy"});
+        } else {
           this.setState({'buy': "NA"});
         }
      })
