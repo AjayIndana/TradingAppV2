@@ -95,7 +95,7 @@ export default class StockRow extends Component {
       .then((response) => response.json())
       .then((responseJson) => {
             var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0];
-            var closePrice = this.state.closePrice;
+            var closePrice=this.state.closePrice;
             var low = result["low"].slice().reverse();
             low.shift(-1);
             var high = result["high"].slice().reverse();
@@ -108,29 +108,12 @@ export default class StockRow extends Component {
             this.setState({'prevLowPrice': low[0]});
             this.setState({'prevOpenPrice': open[0]});
             this.setState({'prevClosePrice': close[0]});
-            this.setState({'oneHighPrice': high[1]});
-            this.setState({'oneLowPrice': low[1]});
-            this.setState({'oneOpenPrice': open[1]});
-            this.setState({'oneClosePrice': close[1]});
-        
+
             var lowestPrice = Math.min.apply(null,low);
             var highestPrice = Math.max.apply(null,high);
 
             var range = Math.round(((closePrice-lowestPrice)/(highestPrice-lowestPrice))*100);
             this.setState({'range': range});
-
-            var count=1;
-            var newLow = low[0];
-            for(var i=1;i<low.length;i++){
-              if(low[i]<=newLow){
-                newLow = low[i];
-                count = count+1;
-              }
-              else break;
-            }
-
-            this.setState({'count': count});
-
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -160,9 +143,6 @@ export default class StockRow extends Component {
       .then((response) => {
             var result = JSON.parse(response["_bodyText"].split("quoteHandler1(")[1].slice(0, -1));
             this.setState({'closePrice': result["QuickQuoteResult"]["QuickQuote"]["last"]});
-            this.setState({'sevenRange': ''});
-            this.setState({'volumePercent': ''});
-            this.setState({'updated': ''});
         })
         .then(() => {
           this.updateRow(symbol)
@@ -194,11 +174,12 @@ export default class StockRow extends Component {
 
        var closePrice = this.state.closePrice;
        var range = this.state.range;
+       var prevHighPrice = this.state.prevHighPrice;
+       var prevLowPrice = this.state.prevLowPrice;
+       var prevOpenPrice = this.state.prevOpenPrice;
+       var prevClosePrice = this.state.prevClosePrice;
 
-       var open = responseJson.map(function(n){
-        // if(n.high!=0 && n.high!=-1) return n.high;
-        return n["open"];
-         });
+       var open = responseJson.map(function(n){ return n["open"] });
        open=open.filter(function(n){ return n != undefined });
        var openPrice = parseFloat(open[0]).toFixed(2);
        this.setState({'openPrice': openPrice});
@@ -226,10 +207,7 @@ export default class StockRow extends Component {
            .then((responseJson) => {
                  responseJson = responseJson["barData"]["priceBars"];
 
-                 var volume = responseJson.map(function(n){
-                   return n["volume"]
-                   });
-
+                 var volume = responseJson.map(function(n){ return n["volume"] });
                  volume=volume.filter(function(n){ return n != undefined });
                  if(volume.length>0){
                    var vol = volume.slice(0,length);
@@ -240,9 +218,6 @@ export default class StockRow extends Component {
                    count = count+1;
                    fetchNow();
                  }
-                 // if(symbol=="AMD") {
-                 //   console.log(prevVolume);
-                 // }
              })
              .catch((error,symbol,response) => {
                console.log(error);
@@ -254,71 +229,30 @@ export default class StockRow extends Component {
 
        getPreviousVolume(symbol, open.length);
 
-       var close = responseJson.map(function(n){
-        // if(n.high!=0 && n.high!=-1) return n.high;
-        return n["close"];
-         });
+       var close = responseJson.map(function(n){ return n["close"] });
        close=close.filter(function(n){ return n != undefined });
 
-       var high = responseJson.map(function(n){
-        // if(n.high!=0 && n.high!=-1) return n.high;
-        return n["high"];
-         });
+       var high = responseJson.map(function(n){ return n["high"] });
        high=high.filter(function(n){ return n != undefined });
        var highPrice = high.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice){
-         highPrice = closePrice;
-       }
-       var high7 = high.slice(high.length-6, high.length);
-       var highPrice7 = high7.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice7){
-         highPrice7 = closePrice;
-       }
-       var high15 = high.slice(high.length-14, high.length);
-       var highPrice15 = high15.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice15){
-         highPrice15 = closePrice;
-       }
-       var high30 = high.slice(high.length-29, high.length);
-       var highPrice30 = high30.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice30){
-         highPrice30 = closePrice;
-       }
+       if(closePrice > highPrice){ highPrice = closePrice; }
 
-       var low = responseJson.map(function(n){
-        // if(n.low!=0 && n.low!=-1) return n.low;
-        return n["low"];
-         });
+       var high30 = high.slice(high.length-30, high.length);
+       var highPrice30 = high30.reduce((max, n) => n > max ? n : max);
+       if(closePrice > highPrice30){ highPrice30 = closePrice; }
+
+       var low = responseJson.map(function(n){ return n["low"] });
        low=low.filter(function(n){ return n != undefined });
        var lowPrice = low.reduce((min, n) => n < min ? n : min)
-       if(closePrice < lowPrice){
-         lowPrice = closePrice;
-       }
-       var low7 = low.slice(low.length-6, low.length);
-       var lowPrice7 = low7.reduce((min, n) => n < min ? n : min)
-       if(closePrice < lowPrice7){
-         lowPrice7 = closePrice;
-       }
+       if(closePrice < lowPrice){ lowPrice = closePrice; }
 
-       var low15 = low.slice(low.length-14, low.length);
-       var lowPrice15 = low15.reduce((min, n) => n < min ? n : min)
-       if(closePrice < lowPrice15){
-         lowPrice15 = closePrice;
-       }
-
-       var low30 = low.slice(low.length-29, low.length);
+       var low30 = low.slice(low.length-30, low.length);
        var lowPrice30 = low30.reduce((min, n) => n < min ? n : min)
        if(closePrice < lowPrice30){
          lowPrice30 = closePrice;
        }
 
-       var open7 = open.slice(open.length-6, open.length);
-       var openPrice7 = parseFloat(open7[0]).toFixed(2);
-       this.setState({'openPrice7': openPrice7});
-       var volume = responseJson.map(function(n){
-         //if(n.volume!=0 && n.volume!=-1) return n.volume;
-         return n["volume"]
-         });
+       var volume = responseJson.map(function(n){ return n["volume"] });
 
        volume=volume.filter(function(n){ return n != undefined });
 
@@ -351,24 +285,6 @@ export default class StockRow extends Component {
        this.setState({'bearVolSum': bearVolSum});
        this.setState({'todaysVolume': todaysVolume});
 
-       var sellingPressDown = (openPrice<closePrice) ? Math.round(((openPrice-lowPrice)/(highPrice-lowPrice))*100) : Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
-       this.setState({'sellingPressDown': sellingPressDown});
-       var sellingPressUp = (openPrice<closePrice) ? Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100) : Math.round(((highPrice-openPrice)/(highPrice-lowPrice))*100);
-       this.setState({'sellingPressUp': sellingPressUp});
-       var dayRange = 100 - (sellingPressUp+sellingPressDown);
-       this.setState({'dayRange': dayRange});
-
-       var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
-       this.setState({'sevenRange': sevenRange});
-
-       var diff = parseFloat(closePrice-lowPrice7).toFixed(2);
-       var sevenRangeVolUp = parseFloat((diff*100)/lowPrice7).toFixed(2);
-       this.setState({'sevenRangeVolUp': sevenRangeVolUp});
-
-       var diff2 = parseFloat(highPrice7-closePrice).toFixed(2);
-       var sevenRangeVolDown = parseFloat((diff2*100)/highPrice7).toFixed(2);
-       this.setState({'sevenRangeVolDown': sevenRangeVolDown});
-
        var createGroupedArray = function(arr, chunkSize) {
          var groups = [], i;
          for (i = 0; i < arr.length; i += chunkSize) {
@@ -377,36 +293,49 @@ export default class StockRow extends Component {
          return groups;
        }
 
-       var low_as_arr_rv = createGroupedArray(low.slice().reverse(), 5);
+       var low_as_arr_rv = createGroupedArray(low30.slice().reverse(), 5);
        var low_as_arr = low_as_arr_rv.slice().reverse();
-       var high_as_arr_rv = createGroupedArray(high.slice().reverse(), 5);
+       var high_as_arr_rv = createGroupedArray(high30.slice().reverse(), 5);
        var high_as_arr = high_as_arr_rv.slice().reverse();
-       var low_as_p = low_as_arr.map(function(n){
-         return Math.min.apply(null,n);
-       });
-       var high_as_p = high_as_arr.map(function(n){
-         return Math.max.apply(null,n);
-       });
+       var low_as_p = low_as_arr.map(function(n){ return Math.min.apply(null,n) });
+       var high_as_p = high_as_arr.map(function(n){ return Math.max.apply(null,n) });
 
-       var outs=[], old_outs=[], in_outs=[], L= low_as_p.length, i=0, prev, lh, hh, ol=0;
-       while(i<L){
-           old_outs=in_outs;
-           if(old_outs.length>0) {
-             ol = Math.min.apply(null,old_outs);
-           }
-           in_outs=[];
-           prev= low_as_p[i];
-           while(low_as_p[++i]<prev) in_outs.push(low_as_p[i]);
-           outs = in_outs;
-           if(in_outs.length>0) {
-             lh = Math.min.apply(null,in_outs);
-             hh = 0;
-           }
-           else {
-             hh = prev;
-             lh = 0;
-           }
+       var goingUp = function(arr) {
+         var L= arr.length, i=0, prev, hh, ol=0;
+         while(i<L){
+             var in_outs=[];
+             prev=arr[i];
+             while(arr[++i]<prev) in_outs.push(arr[i]);
+             if(in_outs.length>0) {
+               hh = 0;
+             }
+             else {
+               hh = prev;
+             }
+         }
+         return hh;
        }
+
+       var isHammerOrBull = function(open, close, high, low) {
+         var bottom_tag = 0;
+         var up_tag = 0;
+         var bull = 0;
+          if(open>close){
+            bottom_tag = Math.round(((close-low)/(high-low))*100);
+            up_tag = Math.round(((high-open)/(high-low))*100);
+          } else {
+            bottom_tag = Math.round(((open-low)/(high-low))*100);
+            up_tag = Math.round(((high-close)/(high-low))*100);
+            bull = Math.round(((close-open)/(high-low))*100);
+          }
+          if((bottom_tag>50 && up_tag<10) || (bull>80 && up_tag<10)) return true;
+          else return false;
+       }
+
+     var higher_high = goingUp(high_as_p);
+     var lower_high = goingUp(low_as_p);
+     var prev_bull = isHammerOrBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
+     var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
 
      var lowarr = createGroupedArray(low.slice().reverse(), 5);
 
@@ -425,45 +354,12 @@ export default class StockRow extends Component {
      this.setState({'newLow': parseFloat(newLow).toFixed(2)});
 
      var is_buy = 0;
-     if(hh>0 || newLow>1.002*lh || (newLow>=lh && lh>1.002*ol)) {
-       if(high_as_p.length>1) {
-         if(high_as_p[high_as_p.length-1]>high_as_p[high_as_p.length-2] && low_as_p[low_as_p.length-1]>low_as_p[low_as_p.length-2]) is_buy = 1;
-      } else if(high_as_p.length==1) {
+     if(higher_high>0 && lower_high>0) {
          is_buy = 1;
-       }
      }
-    this.setState({'is_buy': is_buy});
 
      var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
-     var highPredPrice = parseFloat(newLow+(newLow*0.011)).toFixed(2);
      this.setState({'predPrice': predPrice});
-     var newdiff = parseFloat(closePrice-newLow).toFixed(2);
-     var newVol = parseFloat((diff*100)/newLow).toFixed(2);
-     this.setState({'newVol': newVol});
-
-     var higharr = createGroupedArray(high.slice().reverse(), 5);
-     var highp = higharr.map(function(n){
-       return Math.max.apply(null,n);
-     });
-     var newHigh = highp[0];
-     for(var i=1;i<highp.length;i++){
-       if(highp[i]>=newHigh){
-         newHigh = highp[i];
-       }
-       else break;
-     }
-     if(newHigh<closePrice) newHigh=closePrice;
-     this.setState({'newHigh': parseFloat(newHigh).toFixed(2)});
-
-     var maxbottom = parseFloat(newHigh-(newHigh*0.007)).toFixed(2);
-     this.setState({'maxbottom': maxbottom});
-
-     var highper = parseFloat(((highPrice-closePrice)*100)/highPrice).toFixed(2);
-     this.setState({'highper': highper});
-
-      var today = new Date();
-      var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
-      this.setState({'updated': time});
 
       var shares = Math.round(10000/closePrice);
       this.setState({'shares': shares});
@@ -484,10 +380,7 @@ export default class StockRow extends Component {
         this.setState({'volChange': 'down'});
       }
 
-        if((range<50 || range>110) && (closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && lowPrice>this.state.prevLowPrice && (this.state.prevLowPrice<this.state.oneLowPrice || this.state.prevHighPrice<this.state.oneHighPrice)){
-          this.setState({'buy': "Buy"});
-        }
-        else if((range<50 || range>110) && (closePrice>this.state.prevHighPrice || highPredPrice>this.state.prevHighPrice) && (this.state.volChange=="up" || this.state.volPer<20) && this.state.prevClosePrice>this.state.prevOpenPrice && this.state.oneClosePrice>this.state.oneOpenPrice && lowPrice>this.state.prevLowPrice && this.state.prevLowPrice>this.state.oneLowPrice && this.state.prevHighPrice>this.state.oneHighPrice && this.state.count<5){
+        if((range<40 || range>110) && is_buy == 1 && (prev_bull || today_bull)){
           this.setState({'buy': "Buy"});
         }
         else {
@@ -500,16 +393,13 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy" && this.state.is_buy==1 && this.state.bullVolSum>0.8*this.state.bearVolSum && this.state.closePrice>this.state.newLow && this.state.closePrice>this.state.maxbottom){
+    if(this.state.buy=="Buy"){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
             <Updated closePrice={this.state.closePrice}/>
             <Buy text={this.state.shares}/>
             <Range lowPrice={this.state.newLow} predPrice={this.state.predPrice}/>
-            <SevenRangeVol up={this.state.sevenRangeVolUp} down={this.state.sevenRangeVolDown}/>
-            <HighPer text={this.state.highper}/>
-            <Updated closePrice={this.state.limit}/>
             <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
             <PushController />
           </View>
