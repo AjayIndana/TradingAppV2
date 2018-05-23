@@ -58,7 +58,6 @@ class TableList extends React.PureComponent {
       {title: 'COST'},
       {title: 'CSCO'},
       {title: 'DAL'},
-      {title: 'DIS'},
       {title: 'EXAS'},
       {title: 'FB'},
       {title: 'FDX'},
