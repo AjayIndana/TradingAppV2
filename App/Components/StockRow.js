@@ -154,6 +154,9 @@ export default class StockRow extends Component {
             this.setState({'closePrice': result["QuickQuoteResult"]["QuickQuote"]["last"]});
         })
         .then(() => {
+          this.getPreviousPrice(symbol)
+        })
+        .then(() => {
           this.updateRow(symbol)
         })
         .catch((error,symbol,response) => {
@@ -196,10 +199,45 @@ export default class StockRow extends Component {
        // var twoOpenPrice = this.state.twoOpenPrice;
        // var twoClosePrice = this.state.twoClosePrice;
 
-       var open = responseJson.map(function(n){ return n["open"] });
-       open=open.filter(function(n){ return n != undefined });
-       var openPrice = parseFloat(open[0]).toFixed(2);
-       this.setState({'openPrice': openPrice});
+       var goingUp = function(arr) {
+         var L= arr.length, i=0, prev, hh, ol=0;
+         while(i<L){
+             var in_outs=[];
+             prev=arr[i];
+             while(arr[++i]<prev) in_outs.push(arr[i]);
+             if(in_outs.length>0) {
+               hh = 0;
+             }
+             else {
+               hh = prev;
+             }
+         }
+         return hh;
+       }
+
+       var createGroupedArray = function(arr, chunkSize) {
+         var groups = [], i;
+         for (i = 0; i < arr.length; i += chunkSize) {
+             groups.push(arr.slice(i, i + chunkSize));
+         }
+         return groups;
+       }
+
+       var isHammerOrBull = function(open, close, high, low) {
+         var bottom_tag = 0;
+         var up_tag = 0;
+         var bull = 0;
+          if(open>close){
+            bottom_tag = Math.round(((close-low)/(high-low))*100);
+            up_tag = Math.round(((high-open)/(high-low))*100);
+          } else {
+            bottom_tag = Math.round(((open-low)/(high-low))*100);
+            up_tag = Math.round(((high-close)/(high-low))*100);
+            bull = Math.round(((close-open)/(high-low))*100);
+          }
+          if((bottom_tag>50 && up_tag<15) || (bull>80 && up_tag<15)) return true;
+          else return false;
+       }
 
        var getPreviousVolume = function(symbol, length){
          var count = 1;
@@ -244,7 +282,10 @@ export default class StockRow extends Component {
            fetchNow();
          }.bind(this)
 
-       getPreviousVolume(symbol, open.length);
+       var open = responseJson.map(function(n){ return n["open"] });
+       open=open.filter(function(n){ return n != undefined });
+       var openPrice = parseFloat(open[0]).toFixed(2);
+       this.setState({'openPrice': openPrice});
 
        var close = responseJson.map(function(n){ return n["close"] });
        close=close.filter(function(n){ return n != undefined });
@@ -272,6 +313,64 @@ export default class StockRow extends Component {
        var volume = responseJson.map(function(n){ return n["volume"] });
 
        volume=volume.filter(function(n){ return n != undefined });
+
+       var low_as_arr_rv = createGroupedArray(low30.slice().reverse(), 5);
+       var low_as_arr = low_as_arr_rv.slice().reverse();
+       var low_as_p = low_as_arr.map(function(n){ return Math.min.apply(null,n) });
+
+     var lower_high = goingUp(low_as_p);
+     // var one_bull = isHammerOrBull(oneOpenPrice, oneClosePrice, oneHighPrice, oneLowPrice);
+     // var two_bull = isHammerOrBull(twoOpenPrice, twoClosePrice, twoHighPrice, twoLowPrice);
+     var prev_bull = isHammerOrBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
+     var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
+
+
+
+     var is_buy = 0;
+     if(lower_high>0) {
+         if(range<30 && low30.length>25 && (prev_bull || today_bull)){
+           var low90 = low.slice(low.length-90, low.length);
+           var lowPrice90 = low90.reduce((min, n) => n < min ? n : min)
+           var low90_as_arr_rv = createGroupedArray(low90.slice().reverse(), 5);
+           var low90_as_arr = low90_as_arr_rv.slice().reverse();
+           var low90_as_p = low90_as_arr.map(function(n){ return Math.min.apply(null,n) });
+           for(var i=0;i<low90_as_p.length-5;i++){
+             var test_arr = low90_as_p.slice(i,i+5);
+             if(goingUp(low90_as_p)>0) is_buy = 1;
+           }
+         } else if(range<30 && low30.length<25 && prev_bull){
+           is_buy = 1;
+         } else if(range>110 && closePrice>openPrice && (prev_bull || today_bull)) {
+           is_buy = 1;
+         }
+     }
+     this.setState({'is_buy': is_buy});
+
+     if(is_buy==1) {
+       var lowarr = createGroupedArray(low.slice().reverse(), 5);
+
+       var lowp = lowarr.map(function(n){
+         return Math.min.apply(null,n);
+       });
+       var newLow = lowp[0];
+       for(var i=1;i<lowp.length;i++){
+         if(lowp[i]<=newLow){
+           newLow = lowp[i];
+         }
+         else break;
+       }
+
+       if(newLow>closePrice) newLow=closePrice;
+       this.setState({'newLow': parseFloat(newLow).toFixed(2)});
+
+       var predHighPrice = parseFloat(newLow+(newLow*0.0045)).toFixed(2);
+       this.setState({'predHighPrice': predHighPrice});
+
+       var predLowPrice = parseFloat(newLow+(newLow*0.0015)).toFixed(2);
+       this.setState({'predLowPrice': predLowPrice});
+
+        var shares = Math.round(10000/closePrice);
+        this.setState({'shares': shares});
 
        var todaysVolume = volume.reduce((a, b) => a + b, 0);
        var i=0;
@@ -302,115 +401,24 @@ export default class StockRow extends Component {
        this.setState({'bearVolSum': bearVolSum});
        this.setState({'todaysVolume': todaysVolume});
 
-       var createGroupedArray = function(arr, chunkSize) {
-         var groups = [], i;
-         for (i = 0; i < arr.length; i += chunkSize) {
-             groups.push(arr.slice(i, i + chunkSize));
-         }
-         return groups;
-       }
 
-       var low_as_arr_rv = createGroupedArray(low30.slice().reverse(), 5);
-       var low_as_arr = low_as_arr_rv.slice().reverse();
-       var high_as_arr_rv = createGroupedArray(high30.slice().reverse(), 5);
-       var high_as_arr = high_as_arr_rv.slice().reverse();
-       var low_as_p = low_as_arr.map(function(n){ return Math.min.apply(null,n) });
-       var high_as_p = high_as_arr.map(function(n){ return Math.max.apply(null,n) });
+      getPreviousVolume(symbol, open.length);
 
-       var goingUp = function(arr) {
-         var L= arr.length, i=0, prev, hh, ol=0;
-         while(i<L){
-             var in_outs=[];
-             prev=arr[i];
-             while(arr[++i]<prev) in_outs.push(arr[i]);
-             if(in_outs.length>0) {
-               hh = 0;
-             }
-             else {
-               hh = prev;
-             }
-         }
-         return hh;
-       }
+        var volChange = this.state.todaysVolume - this.state.prevVolume;
 
-       var isHammerOrBull = function(open, close, high, low) {
-         var bottom_tag = 0;
-         var up_tag = 0;
-         var bull = 0;
-          if(open>close){
-            bottom_tag = Math.round(((close-low)/(high-low))*100);
-            up_tag = Math.round(((high-open)/(high-low))*100);
-          } else {
-            bottom_tag = Math.round(((open-low)/(high-low))*100);
-            up_tag = Math.round(((high-close)/(high-low))*100);
-            bull = Math.round(((close-open)/(high-low))*100);
-          }
-          if((bottom_tag>50 && up_tag<15) || (bull>80 && up_tag<15)) return true;
-          else return false;
-       }
-
-     var higher_high = goingUp(high_as_p);
-     var lower_high = goingUp(low_as_p);
-     // var one_bull = isHammerOrBull(oneOpenPrice, oneClosePrice, oneHighPrice, oneLowPrice);
-     // var two_bull = isHammerOrBull(twoOpenPrice, twoClosePrice, twoHighPrice, twoLowPrice);
-     var prev_bull = isHammerOrBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
-     var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
-
-     var lowarr = createGroupedArray(low.slice().reverse(), 5);
-
-     var lowp = lowarr.map(function(n){
-       return Math.min.apply(null,n);
-     });
-     var newLow = lowp[0];
-     for(var i=1;i<lowp.length;i++){
-       if(lowp[i]<=newLow){
-         newLow = lowp[i];
-       }
-       else break;
-     }
-
-     if(newLow>closePrice) newLow=closePrice;
-     this.setState({'newLow': parseFloat(newLow).toFixed(2)});
-
-     var is_buy = 0;
-     if(higher_high>0 && lower_high>0) {
-         is_buy = 1;
-     }
-     this.setState({'is_buy': is_buy});
-
-     var predPrice = parseFloat(newLow+(newLow*0.0035)).toFixed(2);
-     this.setState({'predPrice': predPrice});
-
-      var shares = Math.round(10000/closePrice);
-      this.setState({'shares': shares});
-
-      var limit = parseFloat(predPrice*0.005).toFixed(2);
-      this.setState({'limit': limit});
-
-      var volChange = this.state.todaysVolume - this.state.prevVolume;
-
-      if(volChange>0) {
-        var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
-        this.setState({'volPer': volPer});
-        this.setState({'volChange': 'up'});
-      }
-      else {
-        var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(0);
-        this.setState({'volPer': volPer});
-        this.setState({'volChange': 'down'});
-      }
-
-      var up_tag = Math.round(((highPrice-closePrice)/(highPrice-lowPrice))*100);
-
-        if(range<30 && is_buy == 1 && low30.length>25 && (prev_bull || today_bull)){
-          this.setState({'buy': "Buy"});
-        } else if(range<30 && is_buy == 1 && low30.length<25 && prev_bull){
-          this.setState({'buy': "Buy"});
-        } else if(range>110 && is_buy == 1 && closePrice>openPrice && (prev_bull || today_bull)) {
-          this.setState({'buy': "Buy"});
-        } else {
-          this.setState({'buy': "NA"});
+        if(volChange>0) {
+          var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
+          this.setState({'volPer': volPer});
+          this.setState({'volChange': 'up'});
         }
+        else {
+          var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(0);
+          this.setState({'volPer': volPer});
+          this.setState({'volChange': 'down'});
+        }
+     }
+
+
      })
      .catch((error,symbol,response) => {
        console.log(error);
@@ -418,13 +426,13 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.buy=="Buy"){
+    if(this.state.is_buy==1 && this.state.closePrice>=this.state.predLowPrice && this.state.closePrice<=this.state.predHighPrice){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol}/>
             <Updated closePrice={this.state.closePrice}/>
             <Buy text={this.state.shares}/>
-            <Range lowPrice={this.state.newLow} predPrice={this.state.predPrice}/>
+            <Range lowPrice={this.state.predLowPrice} predPrice={this.state.predHighPrice}/>
             <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
             <PushController />
           </View>
