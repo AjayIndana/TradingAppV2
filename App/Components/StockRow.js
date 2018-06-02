@@ -10,6 +10,7 @@ import Updated from './Updated'
 import DayVolatility from './DayVolatility'
 import Volume from './Volume'
 import HhVolatility from './HhVolatility'
+import Volatility from './Volatility'
 import SevenRange from './SevenRange'
 import SevenRangeVol from './SevenRangeVol'
 import FifteenRange from './FifteenRange'
@@ -484,19 +485,25 @@ class StockRow extends Component {
      var is_up=0;
      var is_down=0;
      var array = [];
-     if(getDirection(low,5) == "up"){
-       if(low.length>60){
-         array = newLowfun(low,high,15);
+
+      if(low.length>60){
+        var direction = getDirection(low,7);
+        this.setState({'direction': direction});
+        if(direction == "up"){
+           array = newLowfun(low,high,7);
+         } else {
+           array = newHighfun(low,high,7);
+         }
        } else {
-         array = newLowfun(low,high,7);
+         var direction = getDirection(low,3);
+         this.setState({'direction': direction});
+         if(direction == "up"){
+           array = newLowfun(low,high,3);
+         } else {
+           array = newHighfun(low,high,3);
+         }
        }
-     } else {
-       if(low.length>60){
-         array = newHighfun(low,high,15);
-       } else {
-         array = newHighfun(low,high,7);
-       }
-     }
+
      var newLow = array[0];
      var newHigh = array[1];
      var oldLow = array[2];
@@ -512,8 +519,8 @@ class StockRow extends Component {
      // if(symbol == "SQ" || symbol == "NFLX"){
      //   console.log(symbol);
      //   console.log(array);
-     //   console.log(is_up);
-     //   console.log(is_down);
+     //   console.log(this.state.direction);
+     //  // console.log(is_down);
      // }
 
      var stock_buffer = parseFloat(((openPrice-prevClosePrice)/prevClosePrice)*100).toFixed(2);
@@ -570,7 +577,7 @@ class StockRow extends Component {
        var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        this.setState({'hhRange': hhRange});
 
-       var hhVolatility = Math.round(((closePrice-openPrice30)/closePrice)*100*100)/100;
+       var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
        this.setState({'hhVolatility': hhVolatility});
 
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
@@ -661,7 +668,7 @@ class StockRow extends Component {
             <HhRange text={this.state.dayRange}/>
             <HhRange text={this.state.hhRange}/>
             <HhRange text={this.state.sevenRange}/>
-            <HhVolatility text={this.state.hhVolatility}/>
+            <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
             <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
             <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
             <PushController />
@@ -675,7 +682,7 @@ class StockRow extends Component {
               <HhRange text={this.state.dayRange}/>
               <HhRange text={this.state.hhRange}/>
               <HhRange text={this.state.sevenRange}/>
-              <HhVolatility text={this.state.hhVolatility}/>
+              <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
               <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
               <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
               <PushController />

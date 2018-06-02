@@ -5,7 +5,7 @@ import styles from './Styles/HhVolatilityStyle'
 
 export default class HhVolatility extends Component {
   static propTypes = {
-    text: PropTypes.string
+    text: PropTypes.number
   }
   // // Prop type warnings
   // static propTypes = {

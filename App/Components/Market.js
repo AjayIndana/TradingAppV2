@@ -150,7 +150,7 @@ export default class Market extends Component {
        }
 
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
-       var dayVolatility = Math.round(((closePrice-openPrice)/closePrice)*100*100)/100;
+       var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
        this.setState({'dayRange': dayRange});
        this.setState({'dayVolatility': dayVolatility});
 
@@ -170,7 +170,7 @@ export default class Market extends Component {
        var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        this.setState({'hhRange': hhRange});
 
-       var hhVolatility = Math.round(((closePrice-openPrice30)/closePrice)*100*100)/100;
+       var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
        this.setState({'hhVolatility': hhVolatility});
 
        var high60 = high.slice(high.length-60, high.length);
