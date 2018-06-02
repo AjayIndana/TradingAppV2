@@ -19,14 +19,14 @@ export default class HhRange extends Component {
   // }
 
   render () {
-    if(this.props.text<20){
+    if(this.props.text<30){
       return (
         <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )
     }
-    else if(this.props.text>80){
+    else if(this.props.text>70){
       return (
         <View style={styles.container} backgroundColor='green'>
           <Text style={styles.textbox}>{this.props.text}</Text>

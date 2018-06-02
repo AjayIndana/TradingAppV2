@@ -14,5 +14,15 @@ export default StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  textboxRed: {
+    color: 'red',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  textboxGreen: {
+    color: 'green',
+    fontWeight: 'bold',
+    fontSize: 15,
   }
 })

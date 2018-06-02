@@ -10,12 +10,162 @@ import ToggleSwitch from 'toggle-switch-react-native'
 // Styles
 import styles from './Styles/TableListStyle'
 
-class TableList extends React.PureComponent {
+class TableList extends React.Component {
   // static route = {
   //   navigationBar: {
   //     title: 'Watchlist'
   //   }
   // }
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: [
+        {title: 'AAOI'},
+        {title: 'AAPL'},
+        {title: 'ABBV'},
+        {title: 'ADBE'},
+        {title: 'AKAM'},
+        {title: 'ALXN'},
+        {title: 'AMAT'},
+        {title: 'AMD'},
+        {title: 'AMGN'},
+        {title: 'AMTD'},
+        {title: 'ATVI'},
+        {title: 'AVGO'},
+        {title: 'BABA'},
+        {title: 'BEAT'},
+        {title: 'BIDU'},
+        {title: 'BSX'},
+        {title: 'BZUN'},
+        {title: 'CAT'},
+        {title: 'CCI'},
+        {title: 'CELG'},
+        {title: 'CMCSA'},
+        {title: 'CRM'},
+        {title: 'CSCO'},
+        {title: 'DAL'},
+        {title: 'EA'},
+        {title: 'EXAS'},
+        {title: 'EXEL'},
+        {title: 'FB'},
+        {title: 'GILD'},
+        {title: 'GLW'},
+        {title: 'HBAN'},
+        {title: 'HON'},
+        {title: 'INTC'},
+        {title: 'MA'},
+        {title: 'MOMO'},
+        {title: 'MRK'},
+        {title: 'MSFT'},
+        {title: 'MU'},
+        {title: 'NFLX'},
+        {title: 'NOW'},
+        {title: 'NKE'},
+        {title: 'NTES'},
+        {title: 'NTNX'},
+        {title: 'NVDA'},
+        {title: 'OLED'},
+        {title: 'ORCL'},
+        {title: 'PFE'},
+        {title: 'PYPL'},
+        {title: 'QCOM'},
+        {title: 'RHT'},
+        {title: 'ROKU'},
+        {title: 'SHOP'},
+        {title: 'SQ'},
+        {title: 'SO'},
+        {title: 'SIRI'},
+        {title: 'TMO'},
+        {title: 'TSLA'},
+        {title: 'TXN'},
+        {title: 'UAL'},
+        {title: 'UNH'},
+        {title: 'V'},
+        {title: 'VRTX'},
+        {title: 'WDC'},
+        {title: 'WMT'},
+        {title: 'YY'}
+      ],
+    }
+    this.handler = this.handler.bind(this);
+    this._keyExtractor = this._keyExtractor.bind(this);
+  }
+
+  componentWillMount = () => {
+  //  this._keyExtractor();
+  }
+
+  _keyExtractor() {
+    var data = [
+      {title: 'AAOI'},
+      {title: 'AAPL'},
+      {title: 'ADBE'},
+      {title: 'AKAM'},
+      {title: 'ALXN'},
+      {title: 'AMAT'},
+      {title: 'AMD'},
+      {title: 'AMGN'},
+      {title: 'AMTD'},
+      {title: 'AMZN'},
+      {title: 'ATVI'},
+      {title: 'AVGO'},
+      {title: 'BA'},
+      {title: 'BABA'},
+      {title: 'BEAT'},
+      {title: 'BIDU'},
+      {title: 'BLK'},
+      {title: 'BZUN'},
+      {title: 'CAT'},
+      {title: 'CELG'},
+      {title: 'CMCSA'},
+      {title: 'CSCO'},
+      {title: 'DAL'},
+      {title: 'EXAS'},
+      {title: 'FB'},
+      {title: 'GILD'},
+      {title: 'HBAN'},
+      {title: 'INTC'},
+      {title: 'ISRG'},
+      {title: 'LRCX'},
+      {title: 'MOMO'},
+      {title: 'MRK'},
+      {title: 'MSFT'},
+      {title: 'MU'},
+      {title: 'MZOR'},
+      {title: 'NFLX'},
+      {title: 'NKE'},
+      {title: 'NTES'},
+      {title: 'NTNX'},
+      {title: 'NVDA'},
+      {title: 'OLED'},
+      {title: 'ORCL'},
+      {title: 'PETS'},
+      {title: 'QCOM'},
+      {title: 'RHT'},
+      {title: 'ROKU'},
+      {title: 'SHOP'},
+      {title: 'SQ'},
+      {title: 'SIRI'},
+      {title: 'TSLA'},
+      {title: 'UNH'},
+      {title: 'VRTX'},
+      {title: 'WDC'},
+      {title: 'WMT'},
+      {title: 'YY'}
+    ];
+       // returns all keys in object
+       const result = data.map(o => ({ ...o, text: 0 }));
+//       console.log(result);
+       this.setState('data': result);
+    }
+
+  handler(param1) {
+    //console.log(param1);
+    this.setState({
+      'MarketVolatility': param1
+    });
+  }
+
 
   static navigationOptions = {
     //title: 'Watchlist',
@@ -31,67 +181,6 @@ class TableList extends React.PureComponent {
   * This is an array of objects with the properties you desire
   * Usually this should come from Redux mapStateToProps
   *************************************************************/
-  state = {
-    dataObjects: [
-      {title: 'AAPL'},
-      {title: 'ABB'},
-      {title: 'ABBV'},
-      {title: 'ABT'},
-      {title: 'ADBE'},
-      {title: 'AET'},
-      {title: 'AKAM'},
-      {title: 'ALXN'},
-      {title: 'AMAT'},
-      {title: 'AMD'},
-      {title: 'AMGN'},
-      {title: 'AMZN'},
-      {title: 'ATVI'},
-      {title: 'AVGO'},
-      {title: 'BA'},
-      {title: 'BABA'},
-      {title: 'BIDU'},
-      {title: 'BLK'},
-      {title: 'BSX'},
-      {title: 'BZUN'},
-      {title: 'CAT'},
-      {title: 'CELG'},
-      {title: 'COST'},
-      {title: 'CSCO'},
-      {title: 'DAL'},
-      {title: 'EXAS'},
-      {title: 'FB'},
-      {title: 'FDX'},
-      {title: 'GILD'},
-      {title: 'HD'},
-      {title: 'INCY'},
-      {title: 'ISRG'},
-      {title: 'JD'},
-      {title: 'JNJ'},
-      {title: 'LRCX'},
-      {title: 'MMM'},
-      {title: 'MRK'},
-      {title: 'MSFT'},
-      {title: 'MU'},
-      {title: 'MZOR'},
-      {title: 'NFLX'},
-      {title: 'NKE'},
-      {title: 'NTES'},
-      {title: 'NTNX'},
-      {title: 'NVDA'},
-      {title: 'OLED'},
-      {title: 'ORCL'},
-      {title: 'REGN'},
-      {title: 'RHT'},
-      {title: 'SHOP'},
-      {title: 'SINA'},
-      {title: 'SQ'},
-      {title: 'TSLA'},
-      {title: 'UNH'},
-      {title: 'VRTX'},
-      {title: 'WDC'},
-      {title: 'YY'}
-    ]
-  }
 
 
 
@@ -156,11 +245,11 @@ class TableList extends React.PureComponent {
   render () {
     return (
       <View style={styles.container}>
-        <Market />
+        <Market handler />
         <ScrollView>
           <FlatList
             contentContainerStyle={styles.listContent}
-            data={this.state.dataObjects}
+            data={this.state.data}
             renderItem={this.renderRow}
             keyExtractor={this.keyExtractor}
             initialNumToRender={this.oneScreensWorth}
@@ -175,15 +264,15 @@ class TableList extends React.PureComponent {
   }
 }
 
-const mapStateToProps = (state) => {
-  return {
-    // ...redux state to props here
-  }
-}
+// const mapStateToProps = (state) => {
+//   return {
+//     // ...redux state to props here
+//   }
+// }
+//
+// const mapDispatchToProps = (dispatch) => {
+//   return {
+//   }
+// }
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(TableList)
+export default TableList

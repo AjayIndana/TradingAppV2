@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
 import { View, Text, TouchableOpacity } from 'react-native'
 import styles from './Styles/StockRowStyle'
@@ -20,8 +21,9 @@ import SellPressDown from './SellPressDown'
 import PushController from './PushController'
 import PushNotification from 'react-native-push-notification'
 import { ArtyCharty } from 'arty-charty'
+import { StackNavigator } from 'react-navigation'
 
-export default class StockRow extends Component {
+class StockRow extends Component {
 
   constructor(props) {
     super(props);
@@ -61,11 +63,11 @@ export default class StockRow extends Component {
     this.handlePushNotification = this.handlePushNotification.bind(this);
     this._onPressButton = this._onPressButton.bind(this);
     this.getPreviousPrice = this.getPreviousPrice.bind(this);
-    //this.getPreviousVolume = this.getPreviousVolume.bind(this);
+    this.getMarketPrice = this.getMarketPrice.bind(this);
   }
 
   componentDidMount = () => {
-    //this.getPreviousVolume(this.state.symbol);
+    this.getMarketPrice();
     this.getPreviousPrice(this.state.symbol);
     this.getClosePrice(this.state.symbol);
     this.setState({'notify': true});
@@ -75,10 +77,14 @@ export default class StockRow extends Component {
     symbol: PropTypes.string
   }
 
-  handlePushNotification(symbol, status, time, shares){
-    PushNotification.localNotification({
-      message: symbol + " was a " + status + " at " + time + " Shares: " + shares
-    });
+  handlePushNotification(text){
+    var todayDate = new Date().toISOString();
+    if(this.state.notify){
+      PushNotification.localNotification({
+        message: text + " " + this.state.symbol + " " + this.state.shares + " " + this.state.hhVolatility
+      });
+      this.setState({'notify': false});
+    }
   }
 
   _onPressButton(){
@@ -90,6 +96,23 @@ export default class StockRow extends Component {
     }
 
   }
+
+  async getMarketPrice(symbol){
+      return fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EIXIC?range=2d&includePrePost=false&interval=1d')
+      .then((response) => response.json())
+      .then((responseJson) => {
+            var result = responseJson["chart"]["result"][0]["indicators"]["quote"][0];
+            var open = result["open"];
+            var close = result["close"];
+            var todayOpen = parseFloat(open[1]).toFixed(2);
+            var yesClose = parseFloat(close[0]).toFixed(2);
+            var buffer = parseFloat(((todayOpen-yesClose)/yesClose)*100).toFixed(2);
+            this.setState({'buffer': buffer});
+        })
+        .catch((error,symbol,response) => {
+          console.log(error);
+        });
+    }
 
   async getPreviousPrice(symbol){
       return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=10d&includePrePost=false&interval=1d')
@@ -183,7 +206,7 @@ export default class StockRow extends Component {
      .then((response) => response.json())
      .then((responseJson) => {
        responseJson = responseJson["barData"]["priceBars"];
-
+       var buffer = this.state.buffer;
        var closePrice = this.state.closePrice;
        var range = this.state.range;
        var prevHighPrice = this.state.prevHighPrice;
@@ -198,6 +221,120 @@ export default class StockRow extends Component {
        // var twoLowPrice = this.state.twoLowPrice;
        // var twoOpenPrice = this.state.twoOpenPrice;
        // var twoClosePrice = this.state.twoClosePrice;
+
+       var getDirection = function(low, blocks) {
+          var lowarr = createGroupedArray(low.slice().reverse(), blocks);
+          var direction = "";
+           var lowp = lowarr.map(function(n){
+             return Math.min.apply(null,n);
+           });
+           var initial = lowp[0];
+           var i=1;
+           for(i=1;i<lowp.length;i++){
+             if(lowp[i]<=initial){
+               initial = lowp[i];
+             }
+             else break;
+           }
+           if(initial == lowp[0]){
+             direction = "down";
+           } else {
+             direction = "up";
+           }
+           return direction;
+         }
+
+       var newLowfun = function(low, high, blocks) {
+          var lowarr = createGroupedArray(low.slice().reverse(), blocks);
+          var higharr = createGroupedArray(high.slice().reverse(), blocks);
+           var lowp = lowarr.map(function(n){
+             return Math.min.apply(null,n);
+           });
+           var highp = higharr.map(function(n){
+             return Math.max.apply(null,n);
+           });
+           var newLow = lowp[0];
+           var i=1;
+           for(i=1;i<lowp.length;i++){
+             if(lowp[i]<=newLow){
+               newLow = lowp[i];
+             }
+             else break;
+           }
+           var j=0;
+           var newHigh = highp[i];
+           for(j=i+1;j<highp.length;j++){
+             if(highp[j]>=newHigh){
+               newHigh = highp[j];
+             }
+             else break;
+           }
+           var k=0;
+           var oldLow = lowp[j];
+           for(k=j+1;k<lowp.length;k++){
+             if(lowp[k]<=oldLow){
+               oldLow = lowp[k];
+             }
+             else break;
+           }
+           var l=0;
+           var oldHigh = highp[k];
+           for(l=k+1;l<highp.length;l++){
+             if(highp[l]>=oldHigh){
+               oldHigh = highp[l];
+             }
+             else break;
+           }
+           return [parseFloat(newLow).toFixed(2),parseFloat(newHigh).toFixed(2),parseFloat(oldLow).toFixed(2),parseFloat(oldHigh).toFixed(2)];
+       }
+
+       var newHighfun = function(low, high, blocks) {
+          var lowarr = createGroupedArray(low.slice().reverse(), blocks);
+          var higharr = createGroupedArray(high.slice().reverse(), blocks);
+
+          var lowp = lowarr.map(function(n){
+            return Math.min.apply(null,n);
+          });
+           var highp = higharr.map(function(n){
+             return Math.max.apply(null,n);
+           });
+           var i=1;
+           var newHigh = highp[0];
+           for(i=1;i<highp.length;i++){
+             if(highp[i]>=newHigh){
+               newHigh = highp[i];
+             }
+             else break;
+           }
+
+           var j=0;
+           var newLow = lowp[i];
+           for(j=i+1;j<lowp.length;j++){
+             if(lowp[j]<=newLow){
+               newLow = lowp[j];
+             }
+             else break;
+           }
+
+           var k=0;
+           var oldHigh = highp[k];
+           for(k=j+1;k<highp.length;k++){
+             if(highp[k]>=oldHigh){
+               oldHigh = highp[k];
+             }
+             else break;
+           }
+
+           var l=0;
+           var oldLow = lowp[l];
+           for(l=k+1;l<lowp.length;l++){
+             if(lowp[l]<=oldLow){
+               oldLow = lowp[l];
+             }
+             else break;
+           }
+           return [parseFloat(newLow).toFixed(2),parseFloat(newHigh).toFixed(2),parseFloat(oldLow).toFixed(2),parseFloat(oldHigh).toFixed(2)]
+       }
 
        var goingUp = function(arr) {
          var L= arr.length, i=0, prev, hh, ol=0;
@@ -235,8 +372,30 @@ export default class StockRow extends Component {
             up_tag = Math.round(((high-close)/(high-low))*100);
             bull = Math.round(((close-open)/(high-low))*100);
           }
-          if((bottom_tag>50 && up_tag<15) || (bull>80 && up_tag<15)) return true;
+          if((bottom_tag>50 && up_tag<35) || (bull>50 && up_tag<35)) return true;
           else return false;
+       }
+
+       var yesBull = function(open, close, high, low) {
+         var tag = 0;
+          if(close>open){
+            tag = Math.round(((high-close)/(high-low))*100);
+            if(tag<15) return true;
+          } else {
+            tag = Math.round(((close-low)/(high-low))*100);
+            if(tag>25) return true;
+          }
+       }
+
+       var yesBear = function(open, close, high, low) {
+         var tag = 0;
+          if(close<open){
+            tag = Math.round(((close-low)/(high-low))*100);
+            if(tag<15) return true;
+          } else {
+            tag = Math.round(((high-close)/(high-low))*100);
+            if(tag>25) return true;
+          }
        }
 
        var getPreviousVolume = function(symbol, length){
@@ -264,7 +423,16 @@ export default class StockRow extends Component {
 
                  var volume = responseJson.map(function(n){ return n["volume"] });
                  volume=volume.filter(function(n){ return n != undefined });
+                 var close = responseJson.map(function(n){ return n["close"] });
+                 close=close.filter(function(n){ return n != undefined });
+
                  if(volume.length>0){
+                   var open = this.state.prevOpenPrice;
+                   if(length>close.length){
+                     length = close.length;
+                   }
+                   var prevVolatility = close[length-1] - open;
+                   this.setState({'prevVolatility': prevVolatility});
                    var vol = volume.slice(0,length);
                    prevVolume = vol.reduce((a, b) => a + b, 0);
                    this.setState({'prevVolume': prevVolume});
@@ -295,118 +463,178 @@ export default class StockRow extends Component {
        var highPrice = high.reduce((max, n) => n > max ? n : max);
        if(closePrice > highPrice){ highPrice = closePrice; }
 
-       var high30 = high.slice(high.length-30, high.length);
-       var highPrice30 = high30.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice30){ highPrice30 = closePrice; }
-
        var low = responseJson.map(function(n){ return n["low"] });
        low=low.filter(function(n){ return n != undefined });
        var lowPrice = low.reduce((min, n) => n < min ? n : min)
        if(closePrice < lowPrice){ lowPrice = closePrice; }
 
-       var low30 = low.slice(low.length-30, low.length);
+       var volume = responseJson.map(function(n){ return n["volume"] });
+       volume=volume.filter(function(n){ return n != undefined });
+
+      // var low_as_arr_rv = createGroupedArray(low30.slice().reverse(), 5);
+      // var low_as_arr = low_as_arr_rv.slice().reverse();
+      // var low_as_p = low_as_arr.map(function(n){ return Math.min.apply(null,n) });
+
+     //var lower_high = goingUp(low_as_p);
+     // var one_bull = isHammerOrBull(oneOpenPrice, oneClosePrice, oneHighPrice, oneLowPrice);
+     // var two_bull = isHammerOrBull(twoOpenPrice, twoClosePrice, twoHighPrice, twoLowPrice);
+     var prev_bull = yesBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
+     var prev_bear = yesBear(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
+
+     var is_up=0;
+     var is_down=0;
+     var array = [];
+     if(getDirection(low,5) == "up"){
+       if(low.length>60){
+         array = newLowfun(low,high,15);
+       } else {
+         array = newLowfun(low,high,7);
+       }
+     } else {
+       if(low.length>60){
+         array = newHighfun(low,high,15);
+       } else {
+         array = newHighfun(low,high,7);
+       }
+     }
+     var newLow = array[0];
+     var newHigh = array[1];
+     var oldLow = array[2];
+     var oldHigh = array[3];
+
+     if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh)) {
+       is_up=1;
+     } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow)) {
+       is_down=1;
+     }
+
+     //var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
+     // if(symbol == "SQ" || symbol == "NFLX"){
+     //   console.log(symbol);
+     //   console.log(array);
+     //   console.log(is_up);
+     //   console.log(is_down);
+     // }
+
+     var stock_buffer = parseFloat(((openPrice-prevClosePrice)/prevClosePrice)*100).toFixed(2);
+
+     var is_buy = 0;
+     var is_sell = 0;
+     //this.setState({'is_buy': is_buy});
+     //range =10;
+     if(openPrice>prevClosePrice && is_up==1 && stock_buffer>buffer && closePrice>openPrice && (prev_bull || newLow>prevHighPrice)){
+       is_buy = 1;
+       is_sell = 0;
+       this.setState({'is_buy': is_buy});
+       this.setState({'is_sell': is_sell});
+     } else if(openPrice<=prevClosePrice && is_down==1 && stock_buffer<buffer && closePrice<openPrice && (prev_bear || newHigh<prevLowPrice)){
+       is_buy = 0;
+       is_sell = 1;
+       this.setState({'is_buy': is_buy});
+       this.setState({'is_sell': is_sell});
+     }
+
+     if(is_buy == 1 || is_sell==1 ){
+       getPreviousVolume(symbol, open.length);
+
+       var high7 = high.slice(high.length-6, high.length);
+       var highPrice7 = high7.reduce((max, n) => n > max ? n : max);
+       if(closePrice > highPrice7){
+         highPrice7 = closePrice;
+       }
+       var low7 = low.slice(low.length-6, low.length);
+       var lowPrice7 = low7.reduce((min, n) => n < min ? n : min)
+       if(closePrice < lowPrice7){
+         lowPrice7 = closePrice;
+       }
+       var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sevenRange': sevenRange});
+
+       var length = high.length-30;
+       if(high.length<30){
+         length=0;
+       }
+       var high30 = high.slice(length, high.length);
+       var highPrice30 = high30.reduce((max, n) => n > max ? n : max);
+       if(closePrice > highPrice30){
+         highPrice30 = closePrice;
+       }
+       var low30 = low.slice(length, low.length);
        var lowPrice30 = low30.reduce((min, n) => n < min ? n : min)
        if(closePrice < lowPrice30){
          lowPrice30 = closePrice;
        }
+       var open30 = open.slice(length, open.length);
+       var openPrice30 = parseFloat(open30[0]).toFixed(2);
 
-       var volume = responseJson.map(function(n){ return n["volume"] });
+       var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
+       this.setState({'hhRange': hhRange});
 
-       volume=volume.filter(function(n){ return n != undefined });
+       var hhVolatility = Math.round(((closePrice-openPrice30)/closePrice)*100*100)/100;
+       this.setState({'hhVolatility': hhVolatility});
 
-       var low_as_arr_rv = createGroupedArray(low30.slice().reverse(), 5);
-       var low_as_arr = low_as_arr_rv.slice().reverse();
-       var low_as_p = low_as_arr.map(function(n){ return Math.min.apply(null,n) });
+       var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
+       this.setState({'dayRange': dayRange});
 
-     var lower_high = goingUp(low_as_p);
-     // var one_bull = isHammerOrBull(oneOpenPrice, oneClosePrice, oneHighPrice, oneLowPrice);
-     // var two_bull = isHammerOrBull(twoOpenPrice, twoClosePrice, twoHighPrice, twoLowPrice);
-     var prev_bull = isHammerOrBull(prevOpenPrice, prevClosePrice, prevHighPrice, prevLowPrice);
-     var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
-
-
-
-     var is_buy = 0;
-     if(lower_high>0) {
-         if(range<30 && low30.length>25 && (prev_bull || today_bull)){
-           var low90 = low.slice(low.length-90, low.length);
-           var lowPrice90 = low90.reduce((min, n) => n < min ? n : min)
-           var low90_as_arr_rv = createGroupedArray(low90.slice().reverse(), 5);
-           var low90_as_arr = low90_as_arr_rv.slice().reverse();
-           var low90_as_p = low90_as_arr.map(function(n){ return Math.min.apply(null,n) });
-           for(var i=0;i<low90_as_p.length-5;i++){
-             var test_arr = low90_as_p.slice(i,i+5);
-             if(goingUp(low90_as_p)>0) is_buy = 1;
-           }
-         } else if(range<30 && low30.length<25 && prev_bull){
-           is_buy = 1;
-         } else if(range>110 && closePrice>openPrice && (prev_bull || today_bull)) {
-           is_buy = 1;
-         }
-     }
-     this.setState({'is_buy': is_buy});
-
-     if(is_buy==1) {
-       var lowarr = createGroupedArray(low.slice().reverse(), 5);
-
-       var lowp = lowarr.map(function(n){
-         return Math.min.apply(null,n);
-       });
-       var newLow = lowp[0];
-       for(var i=1;i<lowp.length;i++){
-         if(lowp[i]<=newLow){
-           newLow = lowp[i];
-         }
-         else break;
-       }
-
-       if(newLow>closePrice) newLow=closePrice;
-       this.setState({'newLow': parseFloat(newLow).toFixed(2)});
-
-       var predHighPrice = parseFloat(newLow+(newLow*0.0045)).toFixed(2);
-       this.setState({'predHighPrice': predHighPrice});
-
-       var predLowPrice = parseFloat(newLow+(newLow*0.0015)).toFixed(2);
-       this.setState({'predLowPrice': predLowPrice});
-
-        var shares = Math.round(10000/closePrice);
+        var shares = Math.round(7000/closePrice);
         this.setState({'shares': shares});
 
        var todaysVolume = volume.reduce((a, b) => a + b, 0);
-       var i=0;
-       var bullVol = volume.filter(function(n) {
-         if(open[i]>close[i]) {
-           i=i+1;
-           return 0;
-         }
-         else{
-           i=i+1;
-           return n;
-         }
-       });
-       var bullVolSum = bullVol.reduce((a, b) => a + b, 0);
-       this.setState({'bullVolSum': bullVolSum});
-       var j=0;
-       var bearVol = volume.filter(function(n) {
-         if(open[j]<close[j]) {
-           j=j+1;
-           return 0;
-         }
-         else{
-           j=j+1;
-           return n;
-         }
-       });
-       var bearVolSum = bearVol.reduce((a, b) => a + b, 0);
-       this.setState({'bearVolSum': bearVolSum});
        this.setState({'todaysVolume': todaysVolume});
 
-
-      getPreviousVolume(symbol, open.length);
+       if(volume.length>6){
+         var vol6 = volume.slice(volume.length-3, volume.length);
+         vol6_sum = vol6.reduce((a, b) => a + b, 0);
+         var vol3 = volume.slice(volume.length-6, volume.length-3);
+         vol3_sum = vol3.reduce((a, b) => a + b, 0);
+         var diff = vol6_sum - vol3_sum;
+         if(diff>0.2*vol3_sum){
+             var close13 = close[close.length-3];
+             var open13 = open[open.length-6];
+             var close46 = close[close.length-1];
+             var open46 = open[open.length-3];
+             if(close13-open13 < close46-open46){
+               var vol6_sig = "up";
+               this.setState({'vol6_sig': vol6_sig});
+             } else {
+               var vol6_sig = "down";
+               this.setState({'vol6_sig': vol6_sig});
+             }
+             var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
+             this.setState({'vol6_Per': vol6_Per});
+         } else {
+             var vol6_sig = "neutral";
+             var vol6_Per = parseFloat(((vol3_sum - vol6_sum)/vol3_sum)*100).toFixed(0);
+             this.setState({'vol6_sig': vol6_sig});
+             this.setState({'vol6_Per': vol6_Per});
+         }
+     }
 
         var volChange = this.state.todaysVolume - this.state.prevVolume;
+        var todayVolatility = closePrice - openPrice;
 
-        if(volChange>0) {
+        if(low.length<30 && low.length>6){
+          var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
+          if(this.state.vol6_sig == "up" && is_buy==1){
+            this.handlePushNotification("Buy");
+          }
+          if(this.state.vol6_sig == "down" && is_sell==1){
+            this.handlePushNotification("Short");
+          }
+          if(volChange>0){
+            this.setState({'volChange': 'up'});
+            this.setState({'volPer': volPer});
+          } else {
+            this.setState({'volChange': 'down'});
+            this.setState({'volPer': (-1*volPer)});
+          }
+        } else if(volChange>0) {
+          if(this.state.vol6_sig == "up" && is_buy==1){
+            this.handlePushNotification("Buy");
+          }
+          if(this.state.vol6_sig == "down" && is_sell==1){
+            this.handlePushNotification("Short");
+          }
           var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
           this.setState({'volPer': volPer});
           this.setState({'volChange': 'up'});
@@ -416,8 +644,7 @@ export default class StockRow extends Component {
           this.setState({'volPer': volPer});
           this.setState({'volChange': 'down'});
         }
-     }
-
+      }
 
      })
      .catch((error,symbol,response) => {
@@ -426,17 +653,34 @@ export default class StockRow extends Component {
   }
 
   render () {
-    if(this.state.is_buy==1 && this.state.closePrice>=this.state.predLowPrice && this.state.closePrice<=this.state.predHighPrice){
+    if(this.state.is_buy==1){
       return (
           <View style={styles.container}>
-            <Symbol text={this.state.symbol}/>
-            <Updated closePrice={this.state.closePrice}/>
+            <Symbol text={this.state.symbol} signal="Buy"/>
             <Buy text={this.state.shares}/>
-            <Range lowPrice={this.state.predLowPrice} predPrice={this.state.predHighPrice}/>
+            <HhRange text={this.state.dayRange}/>
+            <HhRange text={this.state.hhRange}/>
+            <HhRange text={this.state.sevenRange}/>
+            <HhVolatility text={this.state.hhVolatility}/>
             <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
+            <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
             <PushController />
           </View>
         )
+      } else if(this.state.is_sell==1){
+        return (
+            <View style={styles.container}>
+              <Symbol text={this.state.symbol} signal="Short"/>
+              <Buy text={this.state.shares}/>
+              <HhRange text={this.state.dayRange}/>
+              <HhRange text={this.state.hhRange}/>
+              <HhRange text={this.state.sevenRange}/>
+              <HhVolatility text={this.state.hhVolatility}/>
+              <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
+              <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
+              <PushController />
+            </View>
+          )
       }
       else{
         return (
@@ -446,3 +690,6 @@ export default class StockRow extends Component {
     }
 
   }
+
+
+  export default StockRow;

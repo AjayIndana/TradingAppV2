@@ -27,9 +27,16 @@ export default class Volume extends Component {
         </View>
       )
     }
-    else {
+    else if(this.props.VolChange=="down"){
       return (
         <View style={styles.container} backgroundColor='red'>
+          <Text style={styles.textbox}>{this.props.VolPer}</Text>
+        </View>
+      )
+    }
+    else {
+      return (
+        <View style={styles.container} backgroundColor='grey'>
           <Text style={styles.textbox}>{this.props.VolPer}</Text>
         </View>
       )

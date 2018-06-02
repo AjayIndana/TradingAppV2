@@ -5,7 +5,8 @@ import styles from './Styles/SymbolStyle'
 
 export default class Symbol extends Component {
   static propTypes = {
-    text: PropTypes.string
+    text: PropTypes.string,
+    signal: PropTypes.string
   }
   // // Prop type warnings
   // static propTypes = {
@@ -19,10 +20,24 @@ export default class Symbol extends Component {
   // }
 
   render () {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.textbox}>{this.props.text}</Text>
-      </View>
-    )
+    if(this.props.signal == "Buy"){
+      return (
+        <View style={styles.container}>
+          <Text style={styles.textboxGreen}>{this.props.text}</Text>
+        </View>
+      )
+    } else if(this.props.signal == "Short"){
+      return (
+        <View style={styles.container}>
+          <Text style={styles.textboxRed}>{this.props.text}</Text>
+        </View>
+      )
+    } else {
+      return (
+        <View style={styles.container}>
+          <Text style={styles.textbox}>{this.props.text}</Text>
+        </View>
+      )
+    }
   }
 }

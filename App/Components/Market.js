@@ -125,6 +125,9 @@ export default class Market extends Component {
        //  this.setState({'closePrice': closePrice});
 
       // Simulator code
+      var open = responseJson.map(function(n){ return n["open"] });
+      open=open.filter(function(n){ return n != undefined });
+      var openPrice = parseFloat(open[0]).toFixed(2);
 
        var high = responseJson.map(function(n){
         // if(n.high!=0 && n.high!=-1) return n.high;
@@ -147,7 +150,7 @@ export default class Market extends Component {
        }
 
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
-       var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
+       var dayVolatility = Math.round(((closePrice-openPrice)/closePrice)*100*100)/100;
        this.setState({'dayRange': dayRange});
        this.setState({'dayVolatility': dayVolatility});
 
@@ -161,9 +164,13 @@ export default class Market extends Component {
        if(closePrice < lowPrice30){
          lowPrice30 = closePrice;
        }
+       var open30 = open.slice(open.length-30, open.length);
+       var openPrice30 = parseFloat(open30[0]).toFixed(2);
+
        var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        this.setState({'hhRange': hhRange});
-       var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
+
+       var hhVolatility = Math.round(((closePrice-openPrice30)/closePrice)*100*100)/100;
        this.setState({'hhVolatility': hhVolatility});
 
        var high60 = high.slice(high.length-60, high.length);
@@ -180,7 +187,6 @@ export default class Market extends Component {
        this.setState({'hourRange': hourRange});
        var hourVolatility = Math.round(((highPrice60-lowPrice60)/closePrice)*100*100)/100;
        this.setState({'hourVolatility': hourVolatility});
-
 
        var high7 = high.slice(high.length-6, high.length);
        var highPrice7 = high7.reduce((max, n) => n > max ? n : max);
@@ -207,8 +213,8 @@ export default class Market extends Component {
           <HhVolatility text="MARKET"/>
           <HhRange text={this.state.dayRange}/>
           <HhVolatility text={this.state.dayVolatility}/>
-          <HhRange text={this.state.hourRange}/>
-          <HhVolatility text={this.state.hourVolatility}/>
+          <HhRange text={this.state.hhRange}/>
+          <HhVolatility text={this.state.hhVolatility}/>
           <HhRange text={this.state.sevenRange}/>
         </View>
     )
