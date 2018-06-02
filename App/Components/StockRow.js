@@ -509,9 +509,9 @@ class StockRow extends Component {
      var oldLow = array[2];
      var oldHigh = array[3];
 
-     if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh)) {
+     if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh) && closePrice>newLow) {
        is_up=1;
-     } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow)) {
+     } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow) && closePrice<newHigh) {
        is_down=1;
      }
 
