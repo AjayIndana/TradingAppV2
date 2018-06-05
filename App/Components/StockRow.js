@@ -55,7 +55,7 @@ class StockRow extends Component {
     }
 
     setInterval(() => {
-      this.getPreviousPrice(this.state.symbol);
+      //this.getPreviousPrice(this.state.symbol);
       this.getClosePrice(this.state.symbol);
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
@@ -82,12 +82,9 @@ class StockRow extends Component {
 
   handlePushNotification(text){
     var todayDate = new Date().toISOString();
-    if(this.state.notify){
       PushNotification.localNotification({
         message: text + " " + this.state.symbol + " " + this.state.shares + " " + this.state.hhVolatility
       });
-      this.setState({'notify': false});
-    }
   }
 
   _onPressButton(){
@@ -144,11 +141,11 @@ class StockRow extends Component {
             // this.setState({'twoOpenPrice': open[2]});
             // this.setState({'twoClosePrice': close[2]});
 
-            var lowestPrice = Math.min.apply(null,low);
-            var highestPrice = Math.max.apply(null,high);
-
-            var range = Math.round(((closePrice-lowestPrice)/(highestPrice-lowestPrice))*100);
-            this.setState({'range': range});
+            // var lowestPrice = Math.min.apply(null,low);
+            // var highestPrice = Math.max.apply(null,high);
+            //
+            // var range = Math.round(((closePrice-lowestPrice)/(highestPrice-lowestPrice))*100);
+            // this.setState({'range': range});
         })
         .catch((error,symbol,response) => {
           console.log(error);
@@ -180,7 +177,7 @@ class StockRow extends Component {
             this.setState({'closePrice': result["QuickQuoteResult"]["QuickQuote"]["last"]});
         })
         .then(() => {
-          this.getPreviousPrice(symbol)
+          //this.getPreviousPrice(symbol)
         })
         .then(() => {
           this.updateRow(symbol)
@@ -211,7 +208,7 @@ class StockRow extends Component {
        responseJson = responseJson["barData"]["priceBars"];
        var buffer = this.state.buffer;
        var closePrice = this.state.closePrice;
-       var range = this.state.range;
+       //var range = this.state.range;
        var prevHighPrice = this.state.prevHighPrice;
        var prevLowPrice = this.state.prevLowPrice;
        var prevOpenPrice = this.state.prevOpenPrice;
@@ -490,7 +487,9 @@ class StockRow extends Component {
 
       if(low.length>90 && low.length<300){
         var direction = getDirection(low,7);
+      //console.log(this.state.direction);
         if(this.state.direction!=direction && this.state.direction!='na'){
+          console.log(symbol);
           this.setState({'alert': true});
         }
         if(this.state.direction!=direction) { this.setState({'direction': direction}); }
@@ -502,7 +501,13 @@ class StockRow extends Component {
          }
        } else {
          var direction = getDirection(low,3);
-         this.setState({'direction': direction});
+         //console.log(this.state.direction);
+         if(this.state.direction!=direction && this.state.direction!='na'){
+           console.log(symbol);
+           this.setState({'alert': true});
+         }
+         if(this.state.direction!=direction) { this.setState({'direction': direction}); }
+
          if(direction == "up"){
            array = newLowfun(low,high,3);
          } else {
