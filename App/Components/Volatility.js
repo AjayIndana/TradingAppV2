@@ -20,13 +20,13 @@ export default class Volatility extends Component {
   // }
 
   render () {
-    if(this.props.direction=="up" && this.props.text>0.35 && this.props.text<1.5) {
+    if(this.props.direction=="up") {
       return (
         <View style={styles.container}>
           <Text style={styles.textboxGreen}>{this.props.text}</Text>
         </View>
       )
-    } else if(this.props.direction=="down" && this.props.text>0.35 && this.props.text<1.5) {
+    } else if(this.props.direction=="down") {
       return (
         <View style={styles.container}>
           <Text style={styles.textboxRed}>{this.props.text}</Text>

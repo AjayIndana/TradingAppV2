@@ -30,6 +30,7 @@ class StockRow extends Component {
     super(props);
     this.state = {
       symbol: props.symbol,
+      alert: false,
       buy: 'NA',
       closePrice: '',
       dayRange: '',
@@ -50,6 +51,7 @@ class StockRow extends Component {
       buynotify: false,
       prevHighPrice: '',
       prevLowPrice: '',
+      direction: 'na',
     }
 
     setInterval(() => {
@@ -486,9 +488,13 @@ class StockRow extends Component {
      var is_down=0;
      var array = [];
 
-      if(low.length>60){
+      if(low.length>90 && low.length<300){
         var direction = getDirection(low,7);
-        this.setState({'direction': direction});
+        if(this.state.direction!=direction && this.state.direction!='na'){
+          this.setState({'alert': true});
+        }
+        if(this.state.direction!=direction) { this.setState({'direction': direction}); }
+
         if(direction == "up"){
            array = newLowfun(low,high,7);
          } else {
@@ -532,11 +538,23 @@ class StockRow extends Component {
      if(openPrice>prevClosePrice && is_up==1 && stock_buffer>buffer && closePrice>openPrice && (prev_bull || newLow>prevHighPrice)){
        is_buy = 1;
        is_sell = 0;
+       if(this.state.alert){
+         if(this.state.direction=="up"){
+           this.handlePushNotification("Buy");
+         }
+         this.setState({'alert': false});
+       }
        this.setState({'is_buy': is_buy});
        this.setState({'is_sell': is_sell});
      } else if(openPrice<=prevClosePrice && is_down==1 && stock_buffer<buffer && closePrice<openPrice && (prev_bear || newHigh<prevLowPrice)){
        is_buy = 0;
        is_sell = 1;
+       if(this.state.alert){
+         if(this.state.direction=="down"){
+           this.handlePushNotification("Short");
+         }
+         this.setState({'alert': false});
+       }
        this.setState({'is_buy': is_buy});
        this.setState({'is_sell': is_sell});
      }
@@ -594,63 +612,31 @@ class StockRow extends Component {
          vol6_sum = vol6.reduce((a, b) => a + b, 0);
          var vol3 = volume.slice(volume.length-6, volume.length-3);
          vol3_sum = vol3.reduce((a, b) => a + b, 0);
-         var diff = vol6_sum - vol3_sum;
-         if(diff>0.2*vol3_sum){
-             var close13 = close[close.length-3];
-             var open13 = open[open.length-6];
-             var close46 = close[close.length-1];
-             var open46 = open[open.length-3];
-             if(close13-open13 < close46-open46){
-               var vol6_sig = "up";
-               this.setState({'vol6_sig': vol6_sig});
-             } else {
-               var vol6_sig = "down";
-               this.setState({'vol6_sig': vol6_sig});
-             }
-             var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
-             this.setState({'vol6_Per': vol6_Per});
+         if(vol6_sum>vol3_sum){
+            var vol6_sig = "up";
+            this.setState({'vol6_sig': vol6_sig});
+            var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
+            this.setState({'vol6_Per': vol6_Per});
          } else {
-             var vol6_sig = "neutral";
+             var vol6_sig = "down";
              var vol6_Per = parseFloat(((vol3_sum - vol6_sum)/vol3_sum)*100).toFixed(0);
              this.setState({'vol6_sig': vol6_sig});
              this.setState({'vol6_Per': vol6_Per});
          }
-     }
+      }
 
         var volChange = this.state.todaysVolume - this.state.prevVolume;
-        var todayVolatility = closePrice - openPrice;
+        var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
 
-        if(low.length<30 && low.length>6){
-          var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
-          if(this.state.vol6_sig == "up" && is_buy==1){
-            this.handlePushNotification("Buy");
-          }
-          if(this.state.vol6_sig == "down" && is_sell==1){
-            this.handlePushNotification("Short");
-          }
-          if(volChange>0){
-            this.setState({'volChange': 'up'});
-            this.setState({'volPer': volPer});
-          } else {
-            this.setState({'volChange': 'down'});
-            this.setState({'volPer': (-1*volPer)});
-          }
-        } else if(volChange>0) {
-          if(this.state.vol6_sig == "up" && is_buy==1){
-            this.handlePushNotification("Buy");
-          }
-          if(this.state.vol6_sig == "down" && is_sell==1){
-            this.handlePushNotification("Short");
-          }
-          var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
+        if(volChange>0){
           this.setState({'volPer': volPer});
           this.setState({'volChange': 'up'});
-        }
-        else {
-          var volPer = parseFloat(((this.state.prevVolume - this.state.todaysVolume)/this.state.prevVolume)*100).toFixed(0);
-          this.setState({'volPer': volPer});
+        } else {
+          this.setState({'volPer': (-1*volPer)});
           this.setState({'volChange': 'down'});
         }
+
+
       }
 
      })
