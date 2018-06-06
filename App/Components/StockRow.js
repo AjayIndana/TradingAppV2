@@ -59,7 +59,7 @@ class StockRow extends Component {
       this.getClosePrice(this.state.symbol);
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
-    }, 20000);
+    }, 60000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
@@ -485,35 +485,32 @@ class StockRow extends Component {
      var is_down=0;
      var array = [];
 
-      if(low.length>90 && low.length<300){
-        var direction = getDirection(low,7);
-      //console.log(this.state.direction);
-        if(this.state.direction!=direction && this.state.direction!='na'){
-          console.log(symbol);
-          this.setState({'alert': true});
-        }
-        if(this.state.direction!=direction) { this.setState({'direction': direction}); }
+     var directionL = getDirection(low,3);
+     var direction2L = getDirection(low.slice(0, -1),3);
+     var direction2H = getDirection(high.slice(0, -1),3);
+     var directionH = getDirection(high,3);
+     var directionC = getDirection(close,3);
+     var direction2C = getDirection(close.slice(0, -1),3);
 
-        if(direction == "up"){
-           array = newLowfun(low,high,7);
-         } else {
-           array = newHighfun(low,high,7);
-         }
-       } else {
-         var direction = getDirection(low,3);
-         //console.log(this.state.direction);
-         if(this.state.direction!=direction && this.state.direction!='na'){
-           console.log(symbol);
-           this.setState({'alert': true});
-         }
-         if(this.state.direction!=direction) { this.setState({'direction': direction}); }
+     var direction = "neutral";
+     var direction2 = "neutral";
+     if(directionL=="up" && directionH=="up" && directionC=="up"){
+       direction = "up";
+     } else if(directionL=="down" && directionH=="down" && directionC=="down"){
+       direction = "down";
+     }
+     if(direction2L=="up" && direction2H=="up" && direction2C=="up"){
+       direction2 = "up";
+     } else if(direction2L=="down" && direction2H=="down" && direction2C=="down"){
+       direction2 = "down";
+     }
+     this.setState({'direction': direction});
 
-         if(direction == "up"){
-           array = newLowfun(low,high,3);
-         } else {
-           array = newHighfun(low,high,3);
-         }
-       }
+     if(directionL == "up"){
+       array = newLowfun(low,high,3);
+     } else {
+       array = newHighfun(low,high,3);
+     }
 
      var newLow = array[0];
      var newHigh = array[1];
@@ -543,22 +540,16 @@ class StockRow extends Component {
      if(openPrice>prevClosePrice && is_up==1 && stock_buffer>buffer && closePrice>openPrice && (prev_bull || newLow>prevHighPrice)){
        is_buy = 1;
        is_sell = 0;
-       if(this.state.alert){
-         if(this.state.direction=="up"){
-           this.handlePushNotification("Buy");
-         }
-         this.setState({'alert': false});
+       if(direction=="up" && direction!=direction2){
+         this.handlePushNotification("Buy");
        }
        this.setState({'is_buy': is_buy});
        this.setState({'is_sell': is_sell});
      } else if(openPrice<=prevClosePrice && is_down==1 && stock_buffer<buffer && closePrice<openPrice && (prev_bear || newHigh<prevLowPrice)){
        is_buy = 0;
        is_sell = 1;
-       if(this.state.alert){
-         if(this.state.direction=="down"){
-           this.handlePushNotification("Short");
-         }
-         this.setState({'alert': false});
+       if(direction=="down" && direction!=direction2){
+         this.handlePushNotification("Short");
        }
        this.setState({'is_buy': is_buy});
        this.setState({'is_sell': is_sell});
