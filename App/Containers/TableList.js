@@ -20,10 +20,13 @@ class TableList extends React.Component {
     super(props);
     this.state = {
       data: [
+        {title: 'AAL'},
         {title: 'AAOI'},
         {title: 'AAPL'},
         {title: 'ABBV'},
         {title: 'ADBE'},
+        {title: 'ADI'},
+        {title: 'ADP'},
         {title: 'AKAM'},
         {title: 'ALXN'},
         {title: 'AMAT'},
@@ -42,35 +45,45 @@ class TableList extends React.Component {
         {title: 'CMCSA'},
         {title: 'CRM'},
         {title: 'CSCO'},
+        {title: 'DBX'},
         {title: 'DAL'},
         {title: 'EA'},
+        {title: 'ESRX'},
         {title: 'EXAS'},
         {title: 'EXEL'},
         {title: 'FB'},
+        {title: 'FOXA'},
         {title: 'GILD'},
-        {title: 'GLW'},
+        {title: 'GRUB'},
         {title: 'HBAN'},
         {title: 'HON'},
         {title: 'INTC'},
+        {title: 'IQ'},
+        {title: 'JD'},
         {title: 'MA'},
         {title: 'MOMO'},
         {title: 'MRK'},
         {title: 'MSFT'},
         {title: 'MU'},
+        {title: 'MYL'},
         {title: 'NFLX'},
         {title: 'NOW'},
         {title: 'NKE'},
+        {title: 'NKTR'},
+        {title: 'NTAP'},
         {title: 'NTES'},
         {title: 'NTNX'},
         {title: 'NVDA'},
         {title: 'OLED'},
         {title: 'ORCL'},
         {title: 'PFE'},
+        {title: 'PLNT'},
         {title: 'PYPL'},
         {title: 'QCOM'},
         {title: 'RHT'},
         {title: 'ROKU'},
         {title: 'SHOP'},
+        {title: 'SNAP'},
         {title: 'SQ'},
         {title: 'SO'},
         {title: 'SIRI'},
@@ -78,6 +91,7 @@ class TableList extends React.Component {
         {title: 'TMO'},
         {title: 'TSLA'},
         {title: 'TXN'},
+        {title: 'TWTR'},
         {title: 'UAL'},
         {title: 'ULTA'},
         {title: 'UNH'},
@@ -88,83 +102,6 @@ class TableList extends React.Component {
         {title: 'YY'}
       ],
     }
-    this.handler = this.handler.bind(this);
-    this._keyExtractor = this._keyExtractor.bind(this);
-  }
-
-  componentWillMount = () => {
-  //  this._keyExtractor();
-  }
-
-  _keyExtractor() {
-    var data = [
-      {title: 'AAOI'},
-      {title: 'AAPL'},
-      {title: 'ADBE'},
-      {title: 'AKAM'},
-      {title: 'ALXN'},
-      {title: 'AMAT'},
-      {title: 'AMD'},
-      {title: 'AMGN'},
-      {title: 'AMTD'},
-      {title: 'AMZN'},
-      {title: 'ATVI'},
-      {title: 'AVGO'},
-      {title: 'BA'},
-      {title: 'BABA'},
-      {title: 'BEAT'},
-      {title: 'BIDU'},
-      {title: 'BLK'},
-      {title: 'BZUN'},
-      {title: 'CAT'},
-      {title: 'CELG'},
-      {title: 'CMCSA'},
-      {title: 'CSCO'},
-      {title: 'DAL'},
-      {title: 'EXAS'},
-      {title: 'FB'},
-      {title: 'GILD'},
-      {title: 'HBAN'},
-      {title: 'INTC'},
-      {title: 'ISRG'},
-      {title: 'LRCX'},
-      {title: 'MOMO'},
-      {title: 'MRK'},
-      {title: 'MSFT'},
-      {title: 'MU'},
-      {title: 'MZOR'},
-      {title: 'NFLX'},
-      {title: 'NKE'},
-      {title: 'NTES'},
-      {title: 'NTNX'},
-      {title: 'NVDA'},
-      {title: 'OLED'},
-      {title: 'ORCL'},
-      {title: 'PETS'},
-      {title: 'QCOM'},
-      {title: 'RHT'},
-      {title: 'ROKU'},
-      {title: 'SHOP'},
-      {title: 'SQ'},
-      {title: 'SIRI'},
-      {title: 'TSLA'},
-      {title: 'UNH'},
-      {title: 'VRTX'},
-      {title: 'WDC'},
-      {title: 'WMT'},
-      {title: 'YY'}
-    ];
-       // returns all keys in object
-       const result = data.map(o => ({ ...o, text: 0 }));
-//       console.log(result);
-       this.setState('data': result);
-    }
-
-  handler(param1) {
-    //console.log(param1);
-    this.setState({
-      'MarketVolatility': param1
-    });
   }
 
 
