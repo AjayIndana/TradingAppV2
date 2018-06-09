@@ -687,6 +687,8 @@ class StockRow extends Component {
        lowPrice3 = parseFloat(lowPrice3).toFixed(2);
        var threeRange = Math.round(((closePrice-lowPrice3)/(highPrice3-lowPrice3))*100);
        this.setState({'threeRange': threeRange});
+       var threeVolatility = Math.round(((highPrice3-lowPrice3)/closePrice)*100*100)/100;
+       this.setState({'threeVolatility': threeVolatility});
 
 
        var length = high.length-30;
@@ -751,7 +753,7 @@ class StockRow extends Component {
             var vol15_avg = parseFloat(vol15_sum/5).toFixed(0);
             var min_vol = parseFloat((vol6_sum*closePrice)/100).toFixed(0);
 
-            if(vol6_sum>vol15_avg && min_vol>10000){
+            if(vol6_sum>vol15_avg && min_vol>10000 && vol6_sum>1.2*vol3_sum){
               this.setState({'vol15_avg': 'up'});
 
             } else {
@@ -779,7 +781,7 @@ class StockRow extends Component {
 
   render () {
     if(this.state.simulate){
-      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.threeVolatility<1.0 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
         return (
             <View style={styles.container}>
               <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
@@ -794,7 +796,7 @@ class StockRow extends Component {
               <PushController />
             </View>
           )
-        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.threeVolatility<1.0 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
           return (
               <View style={styles.container}>
                 <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
@@ -816,7 +818,7 @@ class StockRow extends Component {
           )
         }
     } else {
-      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.threeVolatility<1.0 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
         return (
             <View style={styles.container}>
               <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
@@ -831,7 +833,7 @@ class StockRow extends Component {
               <PushController />
             </View>
           )
-        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.threeVolatility<1.0 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
           return (
               <View style={styles.container}>
                 <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
