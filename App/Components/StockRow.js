@@ -643,7 +643,9 @@ class StockRow extends Component {
        var simulator_data = stop + " : " + limit;
        this.setState({'simulator_data': simulator_data});
      } else if(is_down==1) {
-       var simulator_data = parseFloat(closePrice - (closePrice*0.10)/100).toFixed(2) + " : " + parseFloat(closePrice - (closePrice*0.20)/100).toFixed(2);
+       var stop = (parseFloat(closePrice) - parseFloat(closePrice*0.001)).toFixed(2);
+       var limit = (parseFloat(closePrice) - parseFloat(closePrice*0.002)).toFixed(2);
+       var simulator_data = stop + " : " + limit;
        this.setState({'simulator_data': simulator_data});
      }
 
