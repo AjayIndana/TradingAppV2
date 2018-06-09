@@ -6,7 +6,7 @@ export default StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    width: Metrics.screenWidth/6,
+    width: Metrics.screenWidth/5,
     height: 50,
     backgroundColor: 'black',
   },

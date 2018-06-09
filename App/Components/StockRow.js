@@ -10,6 +10,7 @@ import Updated from './Updated'
 import DayVolatility from './DayVolatility'
 import Volume from './Volume'
 import HhVolatility from './HhVolatility'
+import Simulate from './Simulate'
 import Volatility from './Volatility'
 import SevenRange from './SevenRange'
 import SevenRangeVol from './SevenRangeVol'
@@ -52,9 +53,11 @@ class StockRow extends Component {
       prevHighPrice: '',
       prevLowPrice: '',
       direction: 'na',
-      sim_date: '2018-06-08T09:45:00',
+      vol15_avg: 'down',
+      sim_date: '2018-06-08T17:00:00',
       sim_count: 0,
-      simulate: true,
+      simulate: false,
+      simulator_data: '',
     }
 
     setInterval(() => {
@@ -63,7 +66,7 @@ class StockRow extends Component {
       this.simulator_count();
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
-    }, 60000);
+    }, 30000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
@@ -195,7 +198,7 @@ class StockRow extends Component {
          responseJson = responseJson["barData"]["priceBars"];
          var close = responseJson.map(function(n){ return n["close"] });
          close=close.filter(function(n){ return n != undefined });
-         this.setState({'closePrice': close.pop()});
+         this.setState({'closePrice': parseFloat(close.pop()).toFixed(2)});
        })
        .then(() => {
          this.updateRow(symbol)
@@ -208,7 +211,7 @@ class StockRow extends Component {
       return fetch('https://quote.cnbc.com/quote-html-webservice/quote.htm?symbols='+symbol+'&partnerId=2&requestMethod=quick&exthrs=1&noform=1&fund=1&output=jsonp&events=1&callback=quoteHandler1')
       .then((response) => {
             var result = JSON.parse(response["_bodyText"].split("quoteHandler1(")[1].slice(0, -1));
-            this.setState({'closePrice': result["QuickQuoteResult"]["QuickQuote"]["last"]});
+            this.setState({'closePrice': parseFloat(result["QuickQuoteResult"]["QuickQuote"]["last"]).toFixed(2)});
         })
         .then(() => {
           //this.getPreviousPrice(symbol)
@@ -334,24 +337,27 @@ class StockRow extends Component {
            for(j=i+1;j<highp.length;j++){
              if(highp[j]>=newHigh){
                newHigh = highp[j];
+             } else if(j!=i+1){
+               break;
              }
-             else break;
            }
            var k=0;
            var oldLow = lowp[j];
            for(k=j+1;k<lowp.length;k++){
              if(lowp[k]<=oldLow){
                oldLow = lowp[k];
+             } else if(k!=j+1){
+               break;
              }
-             else break;
            }
            var l=0;
            var oldHigh = highp[k];
            for(l=k+1;l<highp.length;l++){
              if(highp[l]>=oldHigh){
                oldHigh = highp[l];
+             } else if(l!=k+1){
+               break;
              }
-             else break;
            }
            return [parseFloat(newLow).toFixed(2),parseFloat(newHigh).toFixed(2),parseFloat(oldLow).toFixed(2),parseFloat(oldHigh).toFixed(2)];
        }
@@ -381,25 +387,31 @@ class StockRow extends Component {
              if(lowp[j]<=newLow){
                newLow = lowp[j];
              }
-             else break;
+             else if(j!=i+1){
+               break;
+             }
            }
 
            var k=0;
-           var oldHigh = highp[k];
+           var oldHigh = highp[j];
            for(k=j+1;k<highp.length;k++){
              if(highp[k]>=oldHigh){
                oldHigh = highp[k];
              }
-             else break;
+             else if(k!=j+1){
+               break;
+             }
            }
 
            var l=0;
-           var oldLow = lowp[l];
+           var oldLow = lowp[k];
            for(l=k+1;l<lowp.length;l++){
              if(lowp[l]<=oldLow){
                oldLow = lowp[l];
              }
-             else break;
+             else if(l!=k+1){
+               break;
+             }
            }
            return [parseFloat(newLow).toFixed(2),parseFloat(newHigh).toFixed(2),parseFloat(oldLow).toFixed(2),parseFloat(oldHigh).toFixed(2)]
        }
@@ -448,10 +460,10 @@ class StockRow extends Component {
          var tag = 0;
           if(close>open){
             tag = Math.round(((open-low)/(high-low))*100);
-            if(tag>25) return true;
+            if(tag>50) return true;
           } else {
             tag = Math.round(((close-low)/(high-low))*100);
-            if(tag>25) return true;
+            if(tag>50) return true;
           }
        }
 
@@ -459,18 +471,21 @@ class StockRow extends Component {
          var tag = 0;
           if(close<open){
             tag = Math.round(((high-open)/(high-low))*100);
-            if(tag>25) return true;
+            if(tag>50) return true;
           } else {
             tag = Math.round(((high-close)/(high-low))*100);
-            if(tag>25) return true;
+            if(tag>50) return true;
           }
        }
 
-       var getPreviousVolume = function(symbol, length){
+       var getPreviousVolume = function(symbol, length, simulate, simulator_date){
          var count = 1;
          var prevVolume = 0;
          var fetchNow = function() {
            var yesterday = new Date();
+           if(simulate){
+             yesterday = new Date(simulator_date);
+           }
            yesterday.setDate(yesterday.getDate() - count);
            var dd = yesterday.getDate();
            var mm = yesterday.getMonth()+1; //January is 0!
@@ -586,24 +601,17 @@ class StockRow extends Component {
      var oldLow = array[2];
      var oldHigh = array[3];
 
-     if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh) && closePrice>newLow) {
-       is_up=1;
-       this.setState({'is_up': is_up});
-       this.setState({'is_down': is_down});
-     } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow) && closePrice<newHigh) {
-       is_down=1;
-       this.setState({'is_up': is_up});
-       this.setState({'is_down': is_down});
+     if(!isNaN(newLow) && !isNaN(newHigh) && !isNaN(oldLow) && !isNaN(oldHigh)) {
+       if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh) && closePrice>newLow) {
+         is_up=1;
+         this.setState({'is_up': is_up});
+         this.setState({'is_down': is_down});
+       } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow) && closePrice<newHigh) {
+         is_down=1;
+         this.setState({'is_up': is_up});
+         this.setState({'is_down': is_down});
+       }
      }
-
-
-     //var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
-     // if(symbol == "SQ" || symbol == "NFLX"){
-     //   console.log(symbol);
-     //   console.log(array);
-     //   console.log(this.state.direction);
-     //  // console.log(is_down);
-     // }
 
      var stock_buffer = parseFloat(((openPrice-prevClosePrice)/prevClosePrice)*100).toFixed(2);
 
@@ -629,8 +637,18 @@ class StockRow extends Component {
        this.setState({'is_sell': is_sell});
      }
 
+     if(is_up==1){
+       var stop = (parseFloat(closePrice) + parseFloat(closePrice*0.001)).toFixed(2);
+       var limit = (parseFloat(closePrice) + parseFloat(closePrice*0.002)).toFixed(2);
+       var simulator_data = stop + " : " + limit;
+       this.setState({'simulator_data': simulator_data});
+     } else if(is_down==1) {
+       var simulator_data = parseFloat(closePrice - (closePrice*0.10)/100).toFixed(2) + " : " + parseFloat(closePrice - (closePrice*0.20)/100).toFixed(2);
+       this.setState({'simulator_data': simulator_data});
+     }
+
      if(is_up == 1 || is_down==1 ){
-       getPreviousVolume(symbol, open.length);
+       getPreviousVolume(symbol, open.length, this.state.simulate, this.state.sim_date);
 
        var high7 = high.slice(high.length-6, high.length);
        var highPrice7 = high7.reduce((max, n) => n > max ? n : max);
@@ -644,6 +662,14 @@ class StockRow extends Component {
        }
        var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sevenRange': sevenRange});
+
+       var prevhigh7 = high.slice(high.length-10, high.length-3);
+       var prevhighPrice7 = prevhigh7.reduce((max, n) => n > max ? n : max);
+       var prevlow7 = low.slice(low.length-10, low.length-3);
+       var prevlowPrice7 = prevlow7.reduce((min, n) => n < min ? n : min);
+       var prevClosePrice3 = parseFloat(close.slice().reverse()[2]).toFixed(2);
+       var prevsevenRange = Math.round(((prevClosePrice3-prevlowPrice7)/(prevhighPrice7-prevlowPrice7))*100);
+       this.setState({'prevsevenRange': prevsevenRange});
 
        var high3 = high.slice(high.length-3, high.length);
        var highPrice3 = high3.reduce((max, n) => n > max ? n : max);
@@ -718,11 +744,16 @@ class StockRow extends Component {
          vol3_sum = vol3.reduce((a, b) => a + b, 0);
          if(vol6_sum>vol3_sum){
             var vol6_sig = "up";
-            if((directionL=="down" || (directionL=="up" && direction2L=="down")) && is_up==1 && volChange>0 && hhVolatility>0.5 && minor_bull) {
-          //  this.handlePushNotification("Buy");
-            }
-            if((directionH=="up" || (directionH=="down" && direction2H=="up")) && is_down==1 && volChange>0 && hhVolatility>0.5 && minor_bear) {
-          //  this.handlePushNotification("Short");
+            var vol15 = volume.slice(volume.length-15, volume.length);
+            var vol15_sum = vol15.reduce((a, b) => a + b, 0);
+            var vol15_avg = parseFloat(vol15_sum/5).toFixed(0);
+            var min_vol = parseFloat((vol6_sum*closePrice)/100).toFixed(0);
+
+            if(vol6_sum>vol15_avg && min_vol>10000){
+              this.setState({'vol15_avg': 'up'});
+
+            } else {
+              this.setState({'vol15_avg': 'down'});
             }
             this.setState({'vol6_sig': vol6_sig});
             var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
@@ -745,24 +776,11 @@ class StockRow extends Component {
   }
 
   render () {
-    if(this.state.is_up==1 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up"){
-      return (
-          <View style={styles.container}>
-            <Symbol text={this.state.symbol} signal="Buy"/>
-            <Buy text={this.state.shares}/>
-            <HhRange text={this.state.dayRange}/>
-            <HhRange text={this.state.hhRange}/>
-            <HhRange text={this.state.threeRange}/>
-            <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
-            <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
-            <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
-            <PushController />
-          </View>
-        )
-      } else if(this.state.is_down==1 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up"){
+    if(this.state.simulate){
+      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
         return (
             <View style={styles.container}>
-              <Symbol text={this.state.symbol} signal="Short"/>
+              <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
               <Buy text={this.state.shares}/>
               <HhRange text={this.state.dayRange}/>
               <HhRange text={this.state.hhRange}/>
@@ -770,15 +788,70 @@ class StockRow extends Component {
               <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
               <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
               <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
+              <Simulate text={this.state.simulator_data} />
               <PushController />
             </View>
           )
-      }
-      else{
+        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+          return (
+              <View style={styles.container}>
+                <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
+                <Buy text={this.state.shares}/>
+                <HhRange text={this.state.dayRange}/>
+                <HhRange text={this.state.hhRange}/>
+                <HhRange text={this.state.sevenRange}/>
+                <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
+                <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
+                <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
+                <Simulate text={this.state.simulator_data} />
+                <PushController />
+              </View>
+            )
+        }
+        else{
+          return (
+            null
+          )
+        }
+    } else {
+      if(this.state.is_up==1 && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
         return (
-          null
-        )
-      }
+            <View style={styles.container}>
+              <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
+              <Buy text={this.state.shares}/>
+              <HhRange text={this.state.dayRange}/>
+              <HhRange text={this.state.hhRange}/>
+              <HhRange text={this.state.threeRange}/>
+              <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
+              <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
+              <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
+              <Simulate text={this.state.simulator_data} />
+              <PushController />
+            </View>
+          )
+        } else if(this.state.is_down==1 && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+          return (
+              <View style={styles.container}>
+                <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
+                <Buy text={this.state.shares}/>
+                <HhRange text={this.state.dayRange}/>
+                <HhRange text={this.state.hhRange}/>
+                <HhRange text={this.state.sevenRange}/>
+                <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
+                <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
+                <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
+                <Simulate text={this.state.simulator_data} />
+                <PushController />
+              </View>
+            )
+        }
+        else{
+          return (
+            null
+          )
+        }
+    }
+
     }
 
   }

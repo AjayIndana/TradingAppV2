@@ -6,22 +6,12 @@ export default StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    width: Metrics.screenWidth/6,
+    width: Metrics.screenWidth,
     height: 50,
     backgroundColor: 'black',
   },
   textbox: {
     color: 'white',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  textboxRed: {
-    color: 'red',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  textboxGreen: {
-    color: 'green',
     fontWeight: 'bold',
     fontSize: 15,
   }

@@ -7,6 +7,7 @@ import DayRange from './DayRange'
 import HhRange from './HhRange'
 import DayVolatility from './DayVolatility'
 import HhVolatility from './HhVolatility'
+import MarketHeader from './MarketHeader'
 import SevenRange from './SevenRange'
 import { ArtyCharty } from 'arty-charty'
 
@@ -23,16 +24,16 @@ export default class Market extends Component {
       hourVolatility: '',
       sevenRange: '',
       hourRange: '',
-      sim_date: '2018-06-08T09:45:00',
+      sim_date: '2018-06-08T17:00:00',
       sim_count: 0,
-      simulate: true,
+      simulate: false,
       current_time: '',
     }
 
     setInterval(() => {
       this.getClosePrice("^IXIC");
       this.simulator_count();
-    }, 60000);
+    }, 30000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
@@ -57,17 +58,24 @@ export default class Market extends Component {
   simulator_count(){
     var sim_count = this.state.sim_count + 1;
     this.setState({'sim_count': sim_count});
-    var today = new Date(this.state.sim_date);
-    today.setMinutes(today.getMinutes()+sim_count);
+    var today = new Date();
+    if(this.state.simulate){
+      today = new Date(this.state.sim_date);
+      today.setMinutes(today.getMinutes()+sim_count);
+    }
     var hours = today.getHours();
     var minutes = today.getMinutes();
+    var seconds = today.getSeconds();
     if(hours<10){
         hours='0'+hours;
     }
     if(minutes<10){
         minutes='0'+minutes;
     }
-    var time = hours + ":" + minutes + ":00";
+    if(seconds<10){
+        seconds='0'+seconds;
+    }
+    var time = hours + ":" + minutes + ":" + seconds;
     this.setState({'current_time': time});
   }
 
@@ -252,11 +260,17 @@ export default class Market extends Component {
        var open30 = open.slice(open.length-30, open.length);
        var openPrice30 = parseFloat(open30[0]).toFixed(2);
 
-       var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
-       this.setState({'hhRange': hhRange});
 
-       var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
-       this.setState({'hhVolatility': hhVolatility});
+       if(low.length>30){
+         var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
+         this.setState({'hhVolatility': hhVolatility});
+         var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
+         this.setState({'hhRange': hhRange});
+       }
+       else {
+         this.setState({'hhRange': dayRange});
+         this.setState({'hhVolatility': dayVolatility});
+       }
 
        var high60 = high.slice(high.length-60, high.length);
        var highPrice60 = high60.reduce((max, n) => n > max ? n : max);
@@ -295,8 +309,7 @@ export default class Market extends Component {
   render () {
     return (
         <View style={styles.container}>
-          <HhVolatility text={this.state.current_time}/>
-          <HhVolatility text="MARKET"/>
+          <MarketHeader text1="MARKET" text2={this.state.current_time}/>
           <HhRange text={this.state.dayRange}/>
           <HhVolatility text={this.state.dayVolatility}/>
           <HhRange text={this.state.hhRange}/>
