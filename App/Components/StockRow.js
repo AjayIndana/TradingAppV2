@@ -54,7 +54,7 @@ class StockRow extends Component {
       prevLowPrice: '',
       direction: 'na',
       vol15_avg: 'down',
-      sim_date: '2018-06-08T17:00:00',
+      sim_date: '2018-06-07T16:45:00',
       sim_count: 0,
       simulate: false,
       simulator_data: '',
@@ -724,7 +724,7 @@ class StockRow extends Component {
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
        this.setState({'dayRange': dayRange});
 
-        var shares = Math.round(7000/closePrice);
+        var shares = Math.round(20000/closePrice);
         this.setState({'shares': shares});
 
        var todaysVolume = volume.reduce((a, b) => a + b, 0);
