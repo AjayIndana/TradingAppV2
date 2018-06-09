@@ -52,14 +52,18 @@ class StockRow extends Component {
       prevHighPrice: '',
       prevLowPrice: '',
       direction: 'na',
+      sim_date: '2018-06-08T09:45:00',
+      sim_count: 0,
+      simulate: true,
     }
 
     setInterval(() => {
       //this.getPreviousPrice(this.state.symbol);
       this.getClosePrice(this.state.symbol);
+      this.simulator_count();
       //this.handlePushNotification();
       //this.updateRow(this.state.symbol);
-    }, 30000);
+    }, 60000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
@@ -67,6 +71,7 @@ class StockRow extends Component {
     this._onPressButton = this._onPressButton.bind(this);
     this.getPreviousPrice = this.getPreviousPrice.bind(this);
     this.getMarketPrice = this.getMarketPrice.bind(this);
+    this.simulator_count = this.simulator_count.bind(this);
   }
 
   componentDidMount = () => {
@@ -95,6 +100,10 @@ class StockRow extends Component {
       this.setState({'expand': true});
     }
 
+  }
+
+  simulator_count(){
+    this.setState({'sim_count': this.state.sim_count+1});
   }
 
   async getMarketPrice(symbol){
@@ -153,24 +162,49 @@ class StockRow extends Component {
     }
 
   async getClosePrice(symbol){
-    if(symbol.includes("IXIC")){
-      symbol = "IXIC";
-      return fetch('https://www.nasdaq.com/quotedll/quote.dll?page=dynamic&mode=data&selected='+symbol+'&random='+Math.random())
-        .then((response) => {
-           var fields =  JSON.stringify(response);
-            this.setState({'closePrice': JSON.parse(fields)["_bodyText"].split("|")[1]});
-        })
-        .then(() => {
-          if(symbol.includes("IXIC")){
-            symbol = "^IXIC";
-          }
-          this.updateRow(symbol)
-        })
-        .catch((error,symbol,response) => {
-          console.log(error);
-        });
+    var simulateUrl = function(symbol,simulator_date,sim_count) {
+      var today = new Date(simulator_date);
+      today.setMinutes(today.getMinutes()+sim_count);
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      var hours = today.getHours();
+      var minutes = today.getMinutes();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+      if(hours<10){
+          hours='0'+hours;
+      }
+      if(minutes<10){
+          minutes='0'+minutes;
+      }
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+minutes+'00'+'/adjusted/EST5EDT.json';
+      return url;
     }
-    else {
+
+    if(this.state.simulate){
+      url = simulateUrl(symbol, this.state.sim_date, this.state.sim_count);
+
+      return fetch(url)
+       .then((response) => response.json())
+       .then((responseJson) => {
+         responseJson = responseJson["barData"]["priceBars"];
+         var close = responseJson.map(function(n){ return n["close"] });
+         close=close.filter(function(n){ return n != undefined });
+         this.setState({'closePrice': close.pop()});
+       })
+       .then(() => {
+         this.updateRow(symbol)
+       })
+       .catch((error,symbol,response) => {
+         console.log(error);
+       });
+
+    } else {
       return fetch('https://quote.cnbc.com/quote-html-webservice/quote.htm?symbols='+symbol+'&partnerId=2&requestMethod=quick&exthrs=1&noform=1&fund=1&output=jsonp&events=1&callback=quoteHandler1')
       .then((response) => {
             var result = JSON.parse(response["_bodyText"].split("quoteHandler1(")[1].slice(0, -1));
@@ -185,22 +219,56 @@ class StockRow extends Component {
         .catch((error,symbol,response) => {
           console.log(error);
         });
+
     }
   }
 
   async updateRow(symbol) {
-    var today = new Date();
-    var dd = today.getDate();
-    var mm = today.getMonth()+1; //January is 0!
-    var yyyy = today.getFullYear();
-    if(dd<10){
-        dd='0'+dd;
-    }
-    if(mm<10){
-        mm='0'+mm;
+
+    var simulateUrl = function(symbol,simulator_date,sim_count) {
+      var today = new Date(simulator_date);
+      today.setMinutes(today.getMinutes()+sim_count);
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      var hours = today.getHours();
+      var minutes = today.getMinutes();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+      if(hours<10){
+          hours='0'+hours;
+      }
+      if(minutes<10){
+          minutes='0'+minutes;
+      }
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+minutes+'00'+'/adjusted/EST5EDT.json';
+      return url;
     }
 
-    var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json'
+    var realUrl = function(symbol){
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json';
+      return url;
+    }
+
+    var url = realUrl(symbol);
+    if(this.state.simulate){
+      url = simulateUrl(symbol, this.state.sim_date, this.state.sim_count);
+    }
 
     return fetch(url)
      .then((response) => response.json())
@@ -379,8 +447,8 @@ class StockRow extends Component {
        var yesBull = function(open, close, high, low) {
          var tag = 0;
           if(close>open){
-            tag = Math.round(((high-close)/(high-low))*100);
-            if(tag<15) return true;
+            tag = Math.round(((open-low)/(high-low))*100);
+            if(tag>25) return true;
           } else {
             tag = Math.round(((close-low)/(high-low))*100);
             if(tag>25) return true;
@@ -390,8 +458,8 @@ class StockRow extends Component {
        var yesBear = function(open, close, high, low) {
          var tag = 0;
           if(close<open){
-            tag = Math.round(((close-low)/(high-low))*100);
-            if(tag<15) return true;
+            tag = Math.round(((high-open)/(high-low))*100);
+            if(tag>25) return true;
           } else {
             tag = Math.round(((high-close)/(high-low))*100);
             if(tag>25) return true;
@@ -505,6 +573,7 @@ class StockRow extends Component {
        direction2 = "down";
      }
      this.setState({'direction': direction});
+    // this.setState({'directionL': directionL});
 
      if(directionL == "up"){
        array = newLowfun(low,high,3);
@@ -519,9 +588,14 @@ class StockRow extends Component {
 
      if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh) && closePrice>newLow) {
        is_up=1;
+       this.setState({'is_up': is_up});
+       this.setState({'is_down': is_down});
      } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow) && closePrice<newHigh) {
        is_down=1;
+       this.setState({'is_up': is_up});
+       this.setState({'is_down': is_down});
      }
+
 
      //var today_bull = isHammerOrBull(openPrice, closePrice, highPrice, lowPrice);
      // if(symbol == "SQ" || symbol == "NFLX"){
@@ -555,7 +629,7 @@ class StockRow extends Component {
        this.setState({'is_sell': is_sell});
      }
 
-     if(is_buy == 1 || is_sell==1 ){
+     if(is_up == 1 || is_down==1 ){
        getPreviousVolume(symbol, open.length);
 
        var high7 = high.slice(high.length-6, high.length);
@@ -576,15 +650,17 @@ class StockRow extends Component {
        if(closePrice > highPrice3){
          highPrice3 = closePrice;
        }
+       highPrice3 = parseFloat(highPrice3).toFixed(2);
        var low3 = low.slice(low.length-3, low.length);
        var lowPrice3 = low3.reduce((min, n) => n < min ? n : min)
        if(closePrice < lowPrice3){
          lowPrice3 = closePrice;
        }
+       lowPrice3 = parseFloat(lowPrice3).toFixed(2);
        var threeRange = Math.round(((closePrice-lowPrice3)/(highPrice3-lowPrice3))*100);
        this.setState({'threeRange': threeRange});
 
-      
+
        var length = high.length-30;
        if(high.length<30){
          length=0;
@@ -602,6 +678,13 @@ class StockRow extends Component {
        var open30 = open.slice(length, open.length);
        var openPrice30 = parseFloat(open30[0]).toFixed(2);
 
+       var openPrice3 = parseFloat(open.slice().reverse()[2]).toFixed(2);
+
+       var minor_bull = yesBull(openPrice3, closePrice, highPrice3, lowPrice3);
+       this.setState({'minor_bull': minor_bull});
+       var minor_bear = yesBear(openPrice3, closePrice, highPrice3, lowPrice3);
+       this.setState({'minor_bear': minor_bear});
+
        var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
        this.setState({'hhRange': hhRange});
 
@@ -616,7 +699,7 @@ class StockRow extends Component {
 
        var todaysVolume = volume.reduce((a, b) => a + b, 0);
        this.setState({'todaysVolume': todaysVolume});
-       
+
        var volChange = this.state.todaysVolume - this.state.prevVolume;
         var volPer = parseFloat((volChange/this.state.prevVolume)*100).toFixed(0);
 
@@ -635,11 +718,11 @@ class StockRow extends Component {
          vol3_sum = vol3.reduce((a, b) => a + b, 0);
          if(vol6_sum>vol3_sum){
             var vol6_sig = "up";
-            if((directionL=="down" || (directionL=="up" && direction2L=="down")) && is_buy==1 && volChange>0 && hhVolatility>0.35 && threeRange>70) {
-            this.handlePushNotification("Buy");
+            if((directionL=="down" || (directionL=="up" && direction2L=="down")) && is_up==1 && volChange>0 && hhVolatility>0.5 && minor_bull) {
+          //  this.handlePushNotification("Buy");
             }
-            if((directionH=="up" || (directionH=="down" && direction2H=="up")) && is_sell==1 && volChange>0 && hhVolatility>0.35 && threeRange<30) {
-            this.handlePushNotification("Short");
+            if((directionH=="up" || (directionH=="down" && direction2H=="up")) && is_down==1 && volChange>0 && hhVolatility>0.5 && minor_bear) {
+          //  this.handlePushNotification("Short");
             }
             this.setState({'vol6_sig': vol6_sig});
             var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
@@ -662,7 +745,7 @@ class StockRow extends Component {
   }
 
   render () {
-    if(this.state.is_buy==1){
+    if(this.state.is_up==1 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up"){
       return (
           <View style={styles.container}>
             <Symbol text={this.state.symbol} signal="Buy"/>
@@ -676,7 +759,7 @@ class StockRow extends Component {
             <PushController />
           </View>
         )
-      } else if(this.state.is_sell==1){
+      } else if(this.state.is_down==1 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up"){
         return (
             <View style={styles.container}>
               <Symbol text={this.state.symbol} signal="Short"/>

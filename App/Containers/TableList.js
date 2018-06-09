@@ -20,11 +20,11 @@ class TableList extends React.Component {
     super(props);
     this.state = {
       data: [
+        {title: 'AABA'},
         {title: 'AAPL'},
         {title: 'ADBE'},
         {title: 'ADI'},
         {title: 'ADP'},
-        {title: 'ALXN'},
         {title: 'AMAT'},
         {title: 'AMD'},
         {title: 'AMGN'},
@@ -32,51 +32,33 @@ class TableList extends React.Component {
         {title: 'BABA'},
         {title: 'BZUN'},
         {title: 'CELG'},
-        {title: 'CRM'},
         {title: 'CSCO'},
-        {title: 'DBX'},
         {title: 'DAL'},
         {title: 'EA'},
-        {title: 'ESRX'},
-        {title: 'EXAS'},
-        {title: 'EXEL'},
+        {title: 'F'},
         {title: 'FB'},
-        {title: 'FOXA'},
         {title: 'GILD'},
-        {title: 'GRUB'},
-        {title: 'HBAN'},
-        {title: 'HON'},
         {title: 'INTC'},
+        {title: 'IQ'},
         {title: 'JD'},
-        {title: 'MOMO'},
         {title: 'MRK'},
         {title: 'MSFT'},
         {title: 'MU'},
         {title: 'NFLX'},
-        {title: 'NOW'},
         {title: 'NKE'},
-        {title: 'NKTR'},
-        {title: 'NTAP'},
-        {title: 'NTES'},
-        {title: 'NTNX'},
         {title: 'NVDA'},
-        {title: 'OLED'},
         {title: 'ORCL'},
-        {title: 'PFE'},
         {title: 'PYPL'},
-        {title: 'QCOM'},
         {title: 'RHT'},
-        {title: 'ROKU'},
         {title: 'SHOP'},
         {title: 'SNAP'},
         {title: 'SQ'},
+        {title: 'TEVA'},
         {title: 'TSLA'},
         {title: 'TWTR'},
-        {title: 'UAL'},
         {title: 'V'},
         {title: 'VRTX'},
         {title: 'WDC'},
-        {title: 'YY'}
       ],
     }
   }
@@ -160,7 +142,7 @@ class TableList extends React.Component {
   render () {
     return (
       <View style={styles.container}>
-        <Market handler />
+        <Market />
         <ScrollView>
           <FlatList
             contentContainerStyle={styles.listContent}

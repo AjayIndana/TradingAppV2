@@ -23,18 +23,25 @@ export default class Market extends Component {
       hourVolatility: '',
       sevenRange: '',
       hourRange: '',
+      sim_date: '2018-06-08T09:45:00',
+      sim_count: 0,
+      simulate: true,
+      current_time: '',
     }
 
     setInterval(() => {
       this.getClosePrice("^IXIC");
-    }, 30000);
+      this.simulator_count();
+    }, 60000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
+    this.simulator_count = this.simulator_count.bind(this);
   }
 
   componentDidMount = () => {
     this.getClosePrice("^IXIC");
+    this.simulator_count();
   }
 
   static propTypes = {
@@ -47,67 +54,145 @@ export default class Market extends Component {
     });
   }
 
-  async getClosePrice(symbol){
-    if(symbol.includes("IXIC")){
-      symbol = ".IXIC";
+  simulator_count(){
+    var sim_count = this.state.sim_count + 1;
+    this.setState({'sim_count': sim_count});
+    var today = new Date(this.state.sim_date);
+    today.setMinutes(today.getMinutes()+sim_count);
+    var hours = today.getHours();
+    var minutes = today.getMinutes();
+    if(hours<10){
+        hours='0'+hours;
+    }
+    if(minutes<10){
+        minutes='0'+minutes;
+    }
+    var time = hours + ":" + minutes + ":00";
+    this.setState({'current_time': time});
+  }
+
+  getClosePrice(symbol){
+    var symbol = ".IXIC"
+    var simulateUrl = function(symbol,simulator_date,sim_count) {
+      var today = new Date(simulator_date);
+      today.setMinutes(today.getMinutes()+sim_count);
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      var hours = today.getHours();
+      var minutes = today.getMinutes();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+      if(hours<10){
+          hours='0'+hours;
+      }
+      if(minutes<10){
+          minutes='0'+minutes;
+      }
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+minutes+'00'+'/adjusted/EST5EDT.json';
+      return url;
+    }
+
+    if(this.state.simulate){
+      url = simulateUrl(symbol, this.state.sim_date, this.state.sim_count);
+
+      return fetch(url)
+       .then((response) => response.json())
+       .then((responseJson) => {
+         responseJson = responseJson["barData"]["priceBars"];
+         var close = responseJson.map(function(n){ return n["close"] });
+         close=close.filter(function(n){ return n != undefined });
+         this.setState({'closePrice': close.pop()});
+       })
+       .then(() => {
+         this.updateRow(symbol)
+       })
+       .catch((error,symbol,response) => {
+         console.log(error);
+       });
+
+    } else {
       return fetch('https://quote.cnbc.com/quote-html-webservice/quote.htm?symbols='+symbol+'&partnerId=2&requestMethod=quick&exthrs=1&noform=1&fund=1&output=jsonp&events=1&callback=quoteHandler1')
       .then((response) => {
             var result = JSON.parse(response["_bodyText"].split("quoteHandler1(")[1].slice(0, -1));
-          //  console.log(result["QuickQuoteResult"]["QuickQuote"]["last"]);
             this.setState({'closePrice': result["QuickQuoteResult"]["QuickQuote"]["last"]});
-
-           // var fields =  JSON.stringify(response);
-           //  this.setState({'closePrice': JSON.parse(fields)["_bodyText"].split("|")[1]});
-           //  //return JSON.parse(fields)["_bodyText"].split("|")[1];
         })
         .then(() => {
-          // if(symbol.includes("IXIC")){
-          //   symbol = "^IXIC";
-          // }
+          //this.getPreviousPrice(symbol)
+        })
+        .then(() => {
           this.updateRow(symbol)
         })
         .catch((error,symbol,response) => {
           console.log(error);
         });
+
     }
   }
 
+
   async updateRow(symbol) {
+    var symbol = ".IXIC"
 
-    var today = new Date();
-    var dd = today.getDate();
-    var mm = today.getMonth()+1; //January is 0!
-    var yyyy = today.getFullYear();
-    if(dd<10){
-        dd='0'+dd;
+    var simulateUrl = function(symbol,simulator_date,sim_count) {
+      var today = new Date(simulator_date);
+      today.setMinutes(today.getMinutes()+sim_count);
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      var hours = today.getHours();
+      var minutes = today.getMinutes();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+      if(hours<10){
+          hours='0'+hours;
+      }
+      if(minutes<10){
+          minutes='0'+minutes;
+      }
+      var time = hours + ":" + minutes + ":00";
+      //this.setState({'current_time': time});
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+minutes+'00'+'/adjusted/EST5EDT.json';
+      return url;
     }
-    if(mm<10){
-        mm='0'+mm;
+
+    var realUrl = function(symbol){
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth()+1; //January is 0!
+      var yyyy = today.getFullYear();
+      if(dd<10){
+          dd='0'+dd;
+      }
+      if(mm<10){
+          mm='0'+mm;
+      }
+      var hours = today.getHours();
+      var minutes = today.getMinutes();
+      if(hours<10){
+          hours='0'+hours;
+      }
+      if(minutes<10){
+          minutes='0'+minutes;
+      }
+      var time = hours + ":" + minutes + ":00";
+      //this.setState({'current_time': time});
+      var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json';
+      return url;
     }
 
-    var url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+'160000'+'/adjusted/EST5EDT.json'
-
-    // Simulator code
-
-        // dd =  today.getDate() -1;
-        // if(dd<10){
-        //     dd='0'+dd;
-        // }
-        // var hours = today.getHours() - 10;
-        // if(hours<10){
-        //     hours='0'+hours;
-        // }
-        // var min = today.getMinutes();
-        // if(min<10){
-        //     min='0'+min;
-        // }
-        // var sec = today.getSeconds();
-        // if(sec<10){
-        //     sec='0'+sec;
-        // }
-        // url = 'https://ts-api.cnbc.com/harmony/app/bars/'+symbol+'/1M/'+yyyy+mm+dd+'093000'+'/'+yyyy+mm+dd+hours+min+sec+'/adjusted/EST5EDT.json'
-
-    // Simulator code
+    var url= realUrl(symbol);
+    if(this.state.simulate){
+      url = simulateUrl(symbol, this.state.sim_date, this.state.sim_count);
+    }
 
      //   return fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol+'?range=1d&includePrePost=false&interval=1m')
    return fetch(url)
@@ -210,6 +295,7 @@ export default class Market extends Component {
   render () {
     return (
         <View style={styles.container}>
+          <HhVolatility text={this.state.current_time}/>
           <HhVolatility text="MARKET"/>
           <HhRange text={this.state.dayRange}/>
           <HhVolatility text={this.state.dayVolatility}/>
