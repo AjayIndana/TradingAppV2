@@ -20,6 +20,7 @@ class TableList extends React.Component {
     super(props);
     this.state = {
       data: [
+        {title: '.IXIC'},
         {title: 'AABA'},
         {title: 'AAPL'},
         {title: 'ADBE'},

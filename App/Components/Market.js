@@ -24,16 +24,16 @@ export default class Market extends Component {
       hourVolatility: '',
       sevenRange: '',
       hourRange: '',
-      sim_date: '2018-06-07T16:45:00',
+      sim_date: '2018-06-08T17:00:00',
       sim_count: 0,
-      simulate: false,
+      simulate: true,
       current_time: '',
     }
 
     setInterval(() => {
       this.getClosePrice("^IXIC");
       this.simulator_count();
-    }, 30000);
+    }, 10000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
