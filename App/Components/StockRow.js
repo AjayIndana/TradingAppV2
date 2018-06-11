@@ -56,7 +56,7 @@ class StockRow extends Component {
       vol15_avg: 'down',
       sim_date: '2018-06-08T17:00:00',
       sim_count: 0,
-      simulate: true,
+      simulate: false,
       simulator_data: '',
     }
 
@@ -315,38 +315,27 @@ class StockRow extends Component {
            return direction;
          }
 
-         var getTime = function(direction, low, high, blocks) {
-            var lowarr = createGroupedArray(low.slice().reverse(), blocks);
-             var lowp = lowarr.map(function(n){
-               return Math.min.apply(null,n);
-             });
-             var higharr = createGroupedArray(high.slice().reverse(), blocks);
-              var highp = higharr.map(function(n){
-                return Math.max.apply(null,n);
-              });
-             var initial = lowp[0];
+         var getTime = function(direction, low, high, newLow, newHigh) {
+             var low_rev = low.slice().reverse();
+             var high_rev = high.slice().reverse();
              if(direction=="down") {
-               var i=1;
-               var newHigh = lowp[0];
-               for(i=1;i<lowp.length;i++){
-                 if(lowp[i]>=newHigh){
-                   newHigh = lowp[i];
+               var i=0;
+               for(i=0;i<high_rev.length;i++){
+                 if(parseFloat(high_rev[i]).toFixed(2)==newHigh){
+                   break;
                  }
-                 else break;
                }
-               return i*3;
+               return i+1;
              }
 
              if(direction=="up") {
-               var newLow = lowp[0];
-               var i=1;
-               for(i=1;i<lowp.length;i++){
-                 if(lowp[i]<=newLow){
-                   newLow = lowp[i];
+               var i=0;
+               for(i=0;i<low_rev.length;i++){
+                 if(parseFloat(low_rev[i]).toFixed(2)==newLow){
+                   break;
                  }
-                 else break;
                }
-               return i*3;
+               return i+1;
              }
            }
 
@@ -513,24 +502,30 @@ class StockRow extends Component {
        }
 
        var yesBull = function(open, close, high, low) {
-         var tag = 0;
+         var tag_up = 0;
+         var tag_down = 0;
           if(close>open){
-            tag = Math.round(((open-low)/(high-low))*100);
-            if(tag>50) return true;
+            tag_down = Math.round(((open-low)/(high-low))*100);
+            tag_up = Math.round(((high-close)/(high-low))*100);
+            if(tag_down>50 || tag_up<20) return true;
           } else {
-            tag = Math.round(((close-low)/(high-low))*100);
-            if(tag>50) return true;
+            tag_down = Math.round(((close-low)/(high-low))*100);
+            tag_up = Math.round(((high-open)/(high-low))*100);
+            if(tag_down>50 || tag_up<20) return true;
           }
        }
 
        var yesBear = function(open, close, high, low) {
-         var tag = 0;
+         var tag_up = 0;
+         var tag_down = 0;
           if(close<open){
-            tag = Math.round(((high-open)/(high-low))*100);
-            if(tag>50) return true;
+            tag_up = Math.round(((high-open)/(high-low))*100);
+            tag_down = Math.round(((close-low)/(high-low))*100);
+            if(tag_up>50 || tag_down<20) return true;
           } else {
-            tag = Math.round(((high-close)/(high-low))*100);
-            if(tag>50) return true;
+            tag_up = Math.round(((high-close)/(high-low))*100);
+            tag_down = Math.round(((open-low)/(high-low))*100);
+            if(tag_up>50 || tag_down<20) return true;
           }
        }
 
@@ -622,6 +617,8 @@ class StockRow extends Component {
 
      var is_up=0;
      var is_down=0;
+     this.setState({'is_up': 0});
+     this.setState({'is_down': 0});
      var array = [];
 
      var directionL = getDirection(low,3);
@@ -658,12 +655,13 @@ class StockRow extends Component {
      var oldLow = array[2];
      var oldHigh = array[3];
 
+
      if(!isNaN(newLow) && !isNaN(newHigh) && !isNaN(oldLow) && !isNaN(oldHigh)) {
-       if(newLow>=oldLow && (closePrice>=newHigh || newHigh>=oldHigh) && closePrice>newLow) {
+       if((newLow>=oldLow || closePrice>newHigh || newHigh>=oldHigh) && closePrice>newLow) {
          is_up=1;
          this.setState({'is_up': is_up});
          this.setState({'is_down': is_down});
-       } else if(newHigh<=oldHigh && (closePrice<=newLow || newLow<=oldLow) && closePrice<newHigh) {
+       } else if((newHigh<=oldHigh || closePrice<newLow || newLow<=oldLow) && closePrice<newHigh) {
          is_down=1;
          this.setState({'is_up': is_up});
          this.setState({'is_down': is_down});
@@ -698,24 +696,25 @@ class StockRow extends Component {
        this.setState({'is_sell': is_sell});
      }
 
+     var time = getTime(directionL, low, high, newLow, newHigh);
+     this.setState({'time': time});
+     this.setState({'simulator_data': ""});
+
      if(is_up==1){
        var stop = (parseFloat(closePrice) + parseFloat(closePrice*0.001)).toFixed(2);
        var limit = (parseFloat(closePrice) + parseFloat(closePrice*0.002)).toFixed(2);
        var shares = Math.round(20000/closePrice);
-       var simulator_data = "BUY " + shares + " shares " + stop + " : " + limit;
-       this.setState({'simulator_data': simulator_data});
+       // var simulator_data = stop + " : " + limit + " " + directionL + " for " + time + " min";
+       // this.setState({'simulator_data': simulator_data});
      } else if(is_down==1) {
        var stop = (parseFloat(closePrice) - parseFloat(closePrice*0.001)).toFixed(2);
        var limit = (parseFloat(closePrice) - parseFloat(closePrice*0.002)).toFixed(2);
        var shares = Math.round(20000/closePrice);
-       var simulator_data = "SHORT " + shares + " shares " + stop + " : " + limit;
-       this.setState({'simulator_data': simulator_data});
+       // var simulator_data = stop + " : " + limit + " " + directionL + " for " + time + " min";
+       // this.setState({'simulator_data': simulator_data});
      }
 
-     if(symbol==".IXIC"){
-       var time = getTime(directionL,low,high,3);
-       this.setState({'time': time});
-     }
+
 
      if(is_up == 1 || is_down==1 || symbol!=".IXIC"){
        getPreviousVolume(symbol, open.length, this.state.simulate, this.state.sim_date);
@@ -814,19 +813,29 @@ class StockRow extends Component {
          vol6_sum = vol6.reduce((a, b) => a + b, 0);
          var vol3 = volume.slice(volume.length-6, volume.length-3);
          vol3_sum = vol3.reduce((a, b) => a + b, 0);
+         var vol15 = volume.slice(volume.length-15, volume.length);
+         var vol15_sum = vol15.reduce((a, b) => a + b, 0);
+         var vol15_avg = parseFloat(vol15_sum/5).toFixed(0);
+         var min_vol = parseFloat((vol6_sum*closePrice)/100).toFixed(0);
+
+         this.setState({'show': false});
+         this.setState({'simulator_data': " "});
+         if(vol6_sum>vol15_avg && min_vol>10000){
+           this.setState({'vol15_avg': 'up'});
+           if(prevsevenRange>70 && dayRange<70){
+             this.setState({'show': true});
+             this.setState({'simulator_data': "May go down"});
+           } else if(prevsevenRange<30 && dayRange>30){
+             this.setState({'show': true});
+             this.setState({'simulator_data': "May go up"});
+           } else {
+             this.setState({'simulator_data': "No clue"});
+           }
+         } else {
+           this.setState({'vol15_avg': 'down'});
+         }
          if(vol6_sum>vol3_sum){
             var vol6_sig = "up";
-            var vol15 = volume.slice(volume.length-15, volume.length);
-            var vol15_sum = vol15.reduce((a, b) => a + b, 0);
-            var vol15_avg = parseFloat(vol15_sum/5).toFixed(0);
-            var min_vol = parseFloat((vol6_sum*closePrice)/100).toFixed(0);
-
-            if(vol6_sum>vol15_avg && min_vol>10000 && vol6_sum>1.2*vol3_sum){
-              this.setState({'vol15_avg': 'up'});
-
-            } else {
-              this.setState({'vol15_avg': 'down'});
-            }
             this.setState({'vol6_sig': vol6_sig});
             var vol6_Per = parseFloat(((vol6_sum - vol3_sum)/vol3_sum)*100).toFixed(0);
             this.setState({'vol6_Per': vol6_Per});
@@ -848,32 +857,17 @@ class StockRow extends Component {
   }
 
   render () {
-    if(this.state.simulate){
-      if(this.state.symbol==".IXIC"){
-        if(this.state.is_up==1){
-          return (
-            <View style={styles.container}>
-              <Simulate text={"Market is in UP trend and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
-            </View>
-            )
-        } else if(this.state.is_down==1){
+    if(this.state.symbol==".IXIC"){
           return (
               <View style={styles.container}>
-                <Simulate text={"Market is in DOWN trend and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
+                <Simulate text={this.state.directionL + " for " + this.state.time + " min "}/>
               </View>
             )
-        } else {
-          return (
-              <View style={styles.container}>
-                <Simulate text={"Market is moving nowhere and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
-              </View>
-            )
-        }
       }
-      else if(this.state.is_up==1 && this.state.pv=="up" && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
+     else if(this.state.time<3 && this.state.vol15_avg=="up" && this.state.show){
         return (
             <View style={styles.container}>
-              <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
+              <Symbol text={this.state.symbol} closePrice={this.state.closePrice}/>
               <Buy text={this.state.shares}/>
               <HhRange text={this.state.dayRange}/>
               <HhRange text={this.state.hhRange}/>
@@ -885,86 +879,12 @@ class StockRow extends Component {
               <PushController />
             </View>
           )
-        } else if(this.state.is_down==1 && this.state.pv=="down" && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
-          return (
-              <View style={styles.container}>
-                <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
-                <Buy text={this.state.shares}/>
-                <HhRange text={this.state.dayRange}/>
-                <HhRange text={this.state.hhRange}/>
-                <HhRange text={this.state.sevenRange}/>
-                <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
-                <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
-                <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
-                <Simulate text={this.state.simulator_data} />
-                <PushController />
-              </View>
-            )
         }
         else{
           return (
             null
           )
         }
-    } else {
-      if(this.state.symbol==".IXIC"){
-        if(this.state.is_up==1){
-          return (
-            <View style={styles.container}>
-              <Simulate text={"Market is in UP trend and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
-            </View>
-            )
-        } else if(this.state.is_down==1){
-          return (
-              <View style={styles.container}>
-                <Simulate text={"Market is in DOWN trend and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
-              </View>
-            )
-        } else {
-          return (
-              <View style={styles.container}>
-                <Simulate text={"Market is moving nowhere and moving " + this.state.directionL + " for " + this.state.time + " min"}/>
-              </View>
-            )
-        }
-      }
-      else if(this.state.is_up==1 && this.state.pv=="up" && this.state.prevsevenRange<30 && this.state.hhVolatility>0.4 && this.state.minor_bull && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
-        return (
-            <View style={styles.container}>
-              <Symbol text={this.state.symbol} signal="Buy" closePrice={this.state.closePrice}/>
-              <Buy text={this.state.shares}/>
-              <HhRange text={this.state.dayRange}/>
-              <HhRange text={this.state.hhRange}/>
-              <HhRange text={this.state.threeRange}/>
-              <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
-              <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
-              <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
-              <Simulate text={this.state.simulator_data} />
-              <PushController />
-            </View>
-          )
-        } else if(this.state.is_down==1 && this.state.pv=="down" && this.state.prevsevenRange>70 && this.state.hhVolatility>0.4 && this.state.minor_bear && this.state.vol6_sig=="up" && this.state.vol15_avg=="up"){
-          return (
-              <View style={styles.container}>
-                <Symbol text={this.state.symbol} signal="Short" closePrice={this.state.closePrice}/>
-                <Buy text={this.state.shares}/>
-                <HhRange text={this.state.dayRange}/>
-                <HhRange text={this.state.hhRange}/>
-                <HhRange text={this.state.sevenRange}/>
-                <Volatility text={this.state.hhVolatility} direction={this.state.direction}/>
-                <Volume VolChange={this.state.volChange} VolPer={this.state.volPer}/>
-                <Volume VolChange={this.state.vol6_sig} VolPer={this.state.vol6_Per}/>
-                <Simulate text={this.state.simulator_data} />
-                <PushController />
-              </View>
-            )
-        }
-        else{
-          return (
-            null
-          )
-        }
-    }
 
     }
 

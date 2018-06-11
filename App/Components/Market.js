@@ -26,7 +26,7 @@ export default class Market extends Component {
       hourRange: '',
       sim_date: '2018-06-08T17:00:00',
       sim_count: 0,
-      simulate: true,
+      simulate: false,
       current_time: '',
     }
 
