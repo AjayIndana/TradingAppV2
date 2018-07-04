@@ -6,7 +6,8 @@ import styles from './Styles/VolumeStyle'
 export default class Volume extends Component {
   static propTypes = {
     VolPer: PropTypes.number,
-    VolChange: PropTypes.string
+    VolChange: PropTypes.string,
+    DayRange: PropTypes.number,
   }
   // // Prop type warnings
   // static propTypes = {
@@ -20,14 +21,14 @@ export default class Volume extends Component {
   // }
 
   render () {
-    if(this.props.VolChange=="up"){
+    if(this.props.VolChange=="up" && this.props.DayRange>65){
       return (
         <View style={styles.container} backgroundColor='green'>
           <Text style={styles.textbox}>{this.props.VolPer}</Text>
         </View>
       )
     }
-    else if(this.props.VolChange=="down"){
+    else if(this.props.VolChange=="up" && this.props.DayRange<35){
       return (
         <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.VolPer}</Text>

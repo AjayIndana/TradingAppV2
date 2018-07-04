@@ -5,7 +5,10 @@ import styles from './Styles/HhRangeStyle'
 
 export default class HhRange extends Component {
   static propTypes = {
-    text: PropTypes.number
+    text: PropTypes.number,
+    inverse: PropTypes.bool.isRequired,
+    up: PropTypes.number,
+    down: PropTypes.number,
   }
   // // Prop type warnings
   // static propTypes = {
@@ -19,14 +22,14 @@ export default class HhRange extends Component {
   // }
 
   render () {
-    if(this.props.text<30){
+    if((this.props.text<this.props.down && !this.props.inverse) || (this.props.text>this.props.up && this.props.inverse)){
       return (
         <View style={styles.container} backgroundColor='red'>
           <Text style={styles.textbox}>{this.props.text}</Text>
         </View>
       )
     }
-    else if(this.props.text>70){
+    else if((this.props.text>this.props.up && !this.props.inverse) || (this.props.text<this.props.down && this.props.inverse)){
       return (
         <View style={styles.container} backgroundColor='green'>
           <Text style={styles.textbox}>{this.props.text}</Text>

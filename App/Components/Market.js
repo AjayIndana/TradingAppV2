@@ -5,10 +5,13 @@ import styles from './Styles/MarketStyle'
 import Symbol from './Symbol'
 import DayRange from './DayRange'
 import HhRange from './HhRange'
+import Buy from './Buy'
 import DayVolatility from './DayVolatility'
 import HhVolatility from './HhVolatility'
 import MarketHeader from './MarketHeader'
 import SevenRange from './SevenRange'
+import PushController from './PushController'
+import PushNotification from 'react-native-push-notification'
 import { ArtyCharty } from 'arty-charty'
 
 export default class Market extends Component {
@@ -24,19 +27,21 @@ export default class Market extends Component {
       hourVolatility: '',
       sevenRange: '',
       hourRange: '',
-      sim_date: '2018-06-08T17:00:00',
+      sim_date: '2018-07-03T16:32:00',
       sim_count: 0,
       simulate: false,
+      signal: 'N',
       current_time: '',
     }
 
     setInterval(() => {
       this.getClosePrice("^IXIC");
       this.simulator_count();
-    }, 10000);
+    }, 30000);
 
     this.updateRow = this.updateRow.bind(this);
     this.getClosePrice = this.getClosePrice.bind(this);
+    this.handlePushNotification = this.handlePushNotification.bind(this);
     this.simulator_count = this.simulator_count.bind(this);
   }
 
@@ -49,9 +54,9 @@ export default class Market extends Component {
     symbol: PropTypes.string
   }
 
-  handlePushNotification(symbol, status, time){
+  handlePushNotification(signal){
     PushNotification.localNotification({
-      message: symbol + " was a " + status + " at " + time // (required)
+      message: "Market shifted gears : " + signal// (required)
     });
   }
 
@@ -209,15 +214,6 @@ export default class Market extends Component {
        responseJson = responseJson["barData"]["priceBars"];
        var closePrice = this.state.closePrice;
 
-       // Simulator code
-
-       // var close = responseJson.map(function(n){
-       //  return n["close"];
-       //   });
-       //  closePrice = close[close.length-1];
-       //  this.setState({'closePrice': closePrice});
-
-      // Simulator code
       var open = responseJson.map(function(n){ return n["open"] });
       open=open.filter(function(n){ return n != undefined });
       var openPrice = parseFloat(open[0]).toFixed(2);
@@ -242,6 +238,10 @@ export default class Market extends Component {
          lowPrice = closePrice;
        }
 
+       var close = responseJson.map(function(n){ return n["close"] });
+       close=close.filter(function(n){ return n != undefined });
+       var close30 = close.slice(close.length-30, close.length);
+
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
        var dayVolatility = Math.round(((highPrice-lowPrice)/closePrice)*100*100)/100;
        this.setState({'dayRange': dayRange});
@@ -260,32 +260,19 @@ export default class Market extends Component {
        var open30 = open.slice(open.length-30, open.length);
        var openPrice30 = parseFloat(open30[0]).toFixed(2);
 
-
+       var hhRange=0;
+       var hhVolatility=0;
        if(low.length>30){
          var hhVolatility = Math.round(((highPrice30-lowPrice30)/closePrice)*100*100)/100;
          this.setState({'hhVolatility': hhVolatility});
-         var hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
+         hhRange = Math.round(((closePrice-lowPrice30)/(highPrice30-lowPrice30))*100);
          this.setState({'hhRange': hhRange});
-       }
-       else {
+       } else {
+         hhRange=dayRange;
+         hhVolatility=dayVolatility;
          this.setState({'hhRange': dayRange});
          this.setState({'hhVolatility': dayVolatility});
        }
-
-       var high60 = high.slice(high.length-60, high.length);
-       var highPrice60 = high60.reduce((max, n) => n > max ? n : max);
-       if(closePrice > highPrice60){
-         highPrice60 = closePrice;
-       }
-       var low60 = low.slice(low.length-60, low.length);
-       var lowPrice60 = low60.reduce((min, n) => n < min ? n : min)
-       if(closePrice < lowPrice60){
-         lowPrice60 = closePrice;
-       }
-       var hourRange = Math.round(((closePrice-lowPrice60)/(highPrice60-lowPrice60))*100);
-       this.setState({'hourRange': hourRange});
-       var hourVolatility = Math.round(((highPrice60-lowPrice60)/closePrice)*100*100)/100;
-       this.setState({'hourVolatility': hourVolatility});
 
        var high7 = high.slice(high.length-6, high.length);
        var highPrice7 = high7.reduce((max, n) => n > max ? n : max);
@@ -299,6 +286,33 @@ export default class Market extends Component {
        }
        var sevenRange = Math.round(((closePrice-lowPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sevenRange': sevenRange});
+       var last_high = high[high.length-1];
+       var sevenRange_high = Math.round(((last_high-lowPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sevenRange_high': sevenRange_high});
+       var last_low = low[low.length-1];
+       var sevenRange_low = Math.round(((last_low-lowPrice7)/(highPrice7-lowPrice7))*100);
+       this.setState({'sevenRange_low': sevenRange_low});
+
+       if(hhRange<30 && sevenRange_low<50 && sevenRange_high<50 && hhVolatility>0.20){
+         var signal = "S";
+         if(this.state.signal!="S"){
+           this.handlePushNotification("Short");
+           this.setState({'signal': signal});
+          }
+       } else if(hhRange>70 && sevenRange_low>50 && sevenRange_high>50 && hhVolatility>0.20){
+         var signal = "B";
+         if(this.state.signal!="B"){
+           this.handlePushNotification("Buy");
+           this.setState({'signal': signal});
+          }
+       } else {
+         var signal = "N";
+         if(this.state.signal!="N"){
+           this.handlePushNotification("Neutral");
+           this.setState({'signal': signal});
+          }
+         this.setState({'signal': signal});
+       }
 
      })
      .catch((error,symbol,response) => {
@@ -310,11 +324,12 @@ export default class Market extends Component {
     return (
         <View style={styles.container}>
           <MarketHeader text1="MARKET" text2={this.state.current_time}/>
-          <HhRange text={this.state.dayRange}/>
-          <HhVolatility text={this.state.dayVolatility}/>
-          <HhRange text={this.state.hhRange}/>
+          <HhRange text={this.state.dayRange} inverse={false} up={70} down={30}/>
           <HhVolatility text={this.state.hhVolatility}/>
-          <HhRange text={this.state.sevenRange}/>
+          <HhRange text={this.state.hhRange} inverse={false} up={70} down={30}/>
+          <Buy text={this.state.signal}/>
+          <HhRange text={this.state.sevenRange_high} inverse={false} up={50} down={50}/>
+          <HhRange text={this.state.sevenRange_low} inverse={false} up={50} down={50}/>
         </View>
     )
   }
