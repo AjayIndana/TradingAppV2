@@ -355,9 +355,9 @@ class StockRow extends Component {
          var last_low = low[low.length-1];
          var sevenRange_low = Math.round(((last_low-lowPrice7)/(highPrice7-lowPrice7))*100);
          this.setState({'sevenRange_low': sevenRange_low});
-          if((dayRange>90 || (dayRange>65 && hhRange>85)) && sevenRange_low>50 && sevenRange_high>70){
+          if(dayRange>90 || (dayRange>65 && hhRange>85)){
             this.setState({'show': "yes"});
-          } else if((dayRange<10 || (dayRange<35 && hhRange<15)) && sevenRange_low<30 && sevenRange_high<50){
+          } else if(dayRange<10 || (dayRange<35 && hhRange<15)){
             this.setState({'show': "yes"});
           } else {
             this.setState({'show': "no"});
