@@ -271,6 +271,9 @@ class StockRow extends Component {
 
         var shares = Math.round(12500/closePrice);
         this.setState({'shares': shares});
+      
+        var limit = parseFloat(closePrice*0.0035).toFixed(2);
+        this.setState({'limit': limit});
         //console.log("running  " + symbol + " " + cos + " " + roc);
 
 
@@ -397,6 +400,7 @@ class StockRow extends Component {
              <HhRange text={this.state.sevenRange_high} inverse={false} up={70} down={50}/>
              <Volume VolChange={this.state.volChange} VolPer={this.state.volPer} DayRange={this.state.dayRange}/>
              <Volatility text={this.state.shares}/>
+             <Volatility text={this.state.limit}/>
            </View>
          )
         }
