@@ -240,7 +240,6 @@ export default class Market extends Component {
 
        var close = responseJson.map(function(n){ return n["close"] });
        close=close.filter(function(n){ return n != undefined });
-       var oldCP = close[close.length-1];
        var close30 = close.slice(close.length-30, close.length);
 
        var dayRange = Math.round(((closePrice-lowPrice)/(highPrice-lowPrice))*100);
@@ -294,13 +293,13 @@ export default class Market extends Component {
        var sevenRange_low = Math.round(((last_low-lowPrice7)/(highPrice7-lowPrice7))*100);
        this.setState({'sevenRange_low': sevenRange_low});
 
-       if(hhRange<30 && oldCP<=closePrice && hhVolatility>0.20){
+       if(hhRange<35 && hhVolatility>0.20){
          var signal = "S";
          if(this.state.signal!="S"){
            this.handlePushNotification("Short");
            this.setState({'signal': signal});
           }
-       } else if(hhRange>70 && oldCP>=closePrice && hhVolatility>0.20){
+       } else if(hhRange>65 && hhVolatility>0.20){
          var signal = "B";
          if(this.state.signal!="B"){
            this.handlePushNotification("Buy");
@@ -325,9 +324,9 @@ export default class Market extends Component {
     return (
         <View style={styles.container}>
           <MarketHeader text1="MARKET" text2={this.state.current_time}/>
-          <HhRange text={this.state.dayRange} inverse={false} up={70} down={30}/>
+          <HhRange text={this.state.dayRange} inverse={false} up={65} down={35}/>
           <HhVolatility text={this.state.hhVolatility}/>
-          <HhRange text={this.state.hhRange} inverse={false} up={70} down={30}/>
+          <HhRange text={this.state.hhRange} inverse={false} up={65} down={35}/>
           <Buy text={this.state.signal}/>
           <HhRange text={this.state.sevenRange_high} inverse={false} up={50} down={50}/>
           <HhRange text={this.state.sevenRange_low} inverse={false} up={50} down={50}/>
